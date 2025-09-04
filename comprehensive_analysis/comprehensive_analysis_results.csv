@@ -1,0 +1,20 @@
+Analysis_Type,Category,Method,F1_Score,AUC,Accuracy
+Feature_Comparison,Basic,Random Forest,0.6666666666666666,0.6759259259259259,0.7333333333333333
+Feature_Comparison,Basic,SVM,0.25,0.5925925925925927,0.6
+Feature_Comparison,Basic,Logistic Regression,0.2,0.5925925925925927,0.4666666666666667
+Feature_Comparison,Basic,Gradient Boosting,0.4444444444444444,0.40740740740740744,0.6666666666666666
+Feature_Comparison,Spatiotemporal,Random Forest,0.6666666666666666,0.8703703703703703,0.7333333333333333
+Feature_Comparison,Spatiotemporal,SVM,0.0,0.6851851851851852,0.5333333333333333
+Feature_Comparison,Spatiotemporal,Logistic Regression,0.6,0.7777777777777778,0.7333333333333333
+Feature_Comparison,Spatiotemporal,Gradient Boosting,0.6,0.888888888888889,0.7333333333333333
+Feature_Comparison,Neuromorphic,Random Forest,0.5,0.8055555555555556,0.7333333333333333
+Feature_Comparison,Neuromorphic,SVM,0.2857142857142857,0.8148148148148148,0.6666666666666666
+Feature_Comparison,Neuromorphic,Logistic Regression,0.6666666666666666,0.8333333333333334,0.8
+Feature_Comparison,Neuromorphic,Gradient Boosting,0.5,0.712962962962963,0.7333333333333333
+Algorithm_Comparison,Supervised Classification,Random Forest,0.4444444444444444,0.7037037037037037,0.6666666666666666
+Algorithm_Comparison,Supervised Classification,SVM,0.6,0.7037037037037037,0.7333333333333333
+Algorithm_Comparison,Supervised Classification,Logistic Regression,0.4,0.6851851851851852,0.6
+Algorithm_Comparison,Supervised Classification,Gradient Boosting,0.6666666666666666,0.6944444444444444,0.7333333333333333
+Algorithm_Comparison,Unsupervised Anomaly Detection,Isolation Forest,0.4,0.5433333333333334,0.52
+Algorithm_Comparison,Unsupervised Anomaly Detection,One-Class SVM,0.35,0.49166666666666664,0.48
+Algorithm_Comparison,Unsupervised Anomaly Detection,Local Outlier Factor,0.6222222222222222,0.64,0.66

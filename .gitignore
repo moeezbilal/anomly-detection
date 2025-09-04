@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.venv
+.env
+.venv/
+.envrc
+
+# Poetry
+poetry.lock
+
+# Virtual environment
+.venv/
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+#claude
+
+.claude/
+
+
+#data
+data/

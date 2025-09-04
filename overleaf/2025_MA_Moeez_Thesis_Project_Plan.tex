@@ -1,0 +1,360 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{times}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Page geometry
+\geometry{margin=1in}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{M.A. Moeez - Thesis Project Plan}
+\lhead{Anomaly Detection in Neuromorphic Data}
+\cfoot{\thepage}
+
+% Colors
+\definecolor{kthblue}{RGB}{25,84,166}
+\definecolor{darkgray}{RGB}{64,64,64}
+
+% Title formatting
+\title{\textbf{\Large Anomaly Detection in Neuromorphic Data: A Feature-Based Approach} \\ \vspace{0.5cm} \textbf{Thesis Project Plan}}
+\author{M.A. Moeez \\ KTH Royal Institute of Technology}
+\date{\today}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=kthblue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=kthblue
+}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Neuromorphic sensors, particularly Dynamic Vision Sensors (DVS), represent a unique shift in visual data acquisition. Unlike conventional cameras that capture static frames at fixed intervals, DVS sensors detect pixel-level brightness changes asynchronously, resulting in sparse event streams with several advantages: microsecond-level temporal resolution, high dynamic range, and minimal power consumption. These characteristics make them particularly well-suited for applications in autonomous robotics, healthcare monitoring, and other time-sensitive, resource-constrained domains.
+
+Despite these advantages, the asynchronous and sparse nature of event-based data introduces new challenges, particularly for machine learning algorithms designed to handle frame-based inputs. One key challenge is anomaly detection within neuromorphic data streams, which involves identifying abnormal patterns or deviations in event sequences. This task is critical for ensuring reliability in real-world neuromorphic applications, especially in fields such as autonomous driving or security, where undetected anomalies could have severe consequences.
+
+Traditional anomaly detection methods, which are typically designed for dense, synchronous data, often fall short when applied to neuromorphic data due to its unique properties. Our thesis research aims to address this gap by developing a lightweight, adaptable encoder-decoder neural network for anomaly detection. Initially, we considered traditional approaches, including Gaussian Mixture Models (GMMs), but the need for greater flexibility and feature learning led me to also explore a neural network approach as well.
+
+This study focuses on evaluating whether spatiotemporal features, such as event density, optical flow, and time surfaces, improve anomaly detection performance compared to basic features like event rate and polarity distribution. By integrating these features into an encoder-decoder framework, we aim to enhance detection accuracy while maintaining computational efficiency in line with the low-power ethos of neuromorphic hardware.
+
+Ultimately, this thesis research seeks to answer a core question: how do spatiotemporal features compare to raw, basic event-based representations in detecting anomalies within neuromorphic event streams? Addressing this question will provide deeper insights into effective feature representations for sparse, asynchronous data and help unlock the full potential of neuromorphic technologies.
+
+\section{Background and Literature Review}
+
+\subsection{Event-Based Vision}
+
+Event-based cameras, such as the DVS128, represent a paradigm shift in visual sensing by moving away from conventional frame-based imaging. Unlike traditional cameras that capture entire frames at fixed intervals, event cameras respond asynchronously to pixel-level brightness changes. This results in sparse, low-latency event streams, where each event is represented as a tuple $(x, y, \text{timestamp}, \text{polarity})$ where:
+
+\begin{itemize}
+    \item $x, y$: Spatial coordinates of the event
+    \item Timestamp: Microsecond-level time of occurrence
+    \item Polarity: Indicates whether the brightness change is positive or negative
+\end{itemize}
+
+This asynchronous sensing mechanism brings several advantages:
+
+\begin{itemize}
+    \item \textbf{High Temporal Resolution}: Microsecond-level precision for capturing fast motion
+    \item \textbf{Wide Dynamic Range}: Robust performance in challenging lighting conditions
+    \item \textbf{Low Power Consumption}: Ideal for resource-constrained applications such as autonomous drones, robotics, and edge devices
+\end{itemize}
+
+However, the sparsity and asynchronous nature of event streams introduce challenges for machine learning algorithms, particularly for tasks like anomaly detection, which rely on modeling complex, spatiotemporal patterns.
+
+\subsection{Anomaly Detection Approaches}
+
+Anomaly detection aims to identify deviations from normal patterns in data streams. While traditional anomaly detection methods, such as Gaussian Mixture Models (GMM) or k-Nearest Neighbors (k-NN), have shown effectiveness in frame-based settings, they often struggle with the asynchronous, sparse, and high-dimensional nature of neuromorphic data.
+
+To address these challenges, we are planning to explore a neural network-based approach, particularly encoder-decoder architectures. These models are well-suited for learning compact latent representations of normal behavior and detecting anomalies by measuring reconstruction errors. In this thesis, we build upon this approach by incorporating both \textbf{basic features} and \textbf{spatiotemporal features} to improve detection performance.
+
+\subsubsection{Basic Features}
+
+Basic features capture fundamental aspects of the event stream and include:
+
+\begin{itemize}
+    \item \textbf{Event Rate}: Number of events per second
+    \item \textbf{Polarity Distribution}: Ratio of positive to negative events
+    \item \textbf{Average Event Position}: Mean spatial coordinates of events
+\end{itemize}
+
+\subsubsection{Spatiotemporal Features}
+
+Spatiotemporal features aim to capture more complex patterns in the data and include:
+
+\begin{itemize}
+    \item \textbf{Event Density}: Number of events per spatial patch over a time window
+    \item \textbf{Time Surfaces}: Mean timestamp per patch, capturing local temporal dynamics
+    \item \textbf{Optical Flow}: Estimation of motion vectors to capture event-based movement
+\end{itemize}
+
+By leveraging these features, the goal is to enhance the model's ability to distinguish between normal patterns and anomalies, particularly in scenarios involving subtle temporal or spatial deviations.
+
+\subsection{Gap in Literature and Motivation for Research}
+
+Despite the progress in event-based vision and anomaly detection, a key research gap remains: how do spatiotemporal features compare to basic event-based features in detecting anomalies within neuromorphic data? Most existing methods either focus solely on basic features or require computationally intensive architectures, which may not align with the low power of neuromorphic hardware.
+
+This thesis seeks to address this gap by systematically evaluating the effectiveness of spatiotemporal features and basic neuromorphic features within a lightweight encoder-decoder framework. By answering this question, we aim to contribute to the development of more efficient, adaptable anomaly detection methods for neuromorphic data.
+
+\section{Research Question}
+
+\textbf{RQ1:} How do spatiotemporal features (e.g., event density, optical flow) compare to basic features (e.g., event rate, polarity distribution) in detecting anomalies within neuromorphic data?
+
+\textbf{Rationale:} This question explores whether engineered spatiotemporal features enhance anomaly detection accuracy compared to basic features.
+
+\section{Data Resources}
+
+\subsection{Dataset}
+
+We will use the \textbf{MVSEC (Multi-Vehicle Stereo Event Camera) dataset}, which provides real-world neuromorphic data from autonomous driving and aerial navigation scenarios. The dataset comprises event-based recordings from DAVIS 346B cameras with a resolution of $260 \times 346$ pixels, capturing various indoor and outdoor flying sequences.
+
+\textbf{Key Dataset Characteristics:}
+\begin{itemize}
+    \item \textbf{Real-world event streams} from aerial navigation scenarios
+    \item \textbf{DAVIS 346B sensor data} with microsecond temporal resolution
+    \item \textbf{Multiple sequences}: indoor\_flying, outdoor\_day, outdoor\_night scenarios
+    \item \textbf{Event format}: $[x, y, \text{timestamp}, \text{polarity}]$ with $\sim$24 million events per sequence
+    \item \textbf{Dual-channel representation}: Separate positive/negative polarity events
+    \item \textbf{High dynamic range} covering various lighting conditions
+\end{itemize}
+
+\subsection{Data Split}
+
+\begin{itemize}
+    \item \textbf{Training Data}: 70\% of processed event frames for normal behavior modeling
+    \item \textbf{Validation Data}: 15\% for hyperparameter tuning and model selection
+    \item \textbf{Test Data}: 15\% with systematic anomaly injection for evaluation
+    \item \textbf{Event Processing}: Temporal binning into 50 frame sequences with 500K events per sequence for memory efficiency
+    \item \textbf{Spatial Resolution}: Downsampled to $64 \times 64$ pixels for computational optimization
+\end{itemize}
+
+\subsection{Systematic Anomaly Injection}
+
+Our anomaly injection strategy employs \textbf{three distinct anomaly types} designed to simulate realistic failure modes in neuromorphic sensors, creating a balanced dataset (50\% normal, 50\% anomalous) for supervised learning:
+
+\subsubsection{Core Anomaly Types}
+
+\begin{longtable}{|p{3cm}|p{4cm}|p{4cm}|p{3cm}|}
+\hline
+\textbf{Anomaly Type} & \textbf{Implementation} & \textbf{Real-world Motivation} & \textbf{Parameters} \\
+\hline
+\textbf{Blackout Regions} & Multiplicative intensity reduction in spatial regions & Sensor failures, dust/dirt occlusion, hardware malfunctions & 70-100\% intensity reduction, 10-40 pixel regions \\
+\hline
+\textbf{Vibration Noise} & Additive Gaussian noise in localized regions & Camera shake, vehicle vibrations, mechanical disturbances & 0.3-0.7 noise intensity, 20-60 pixel coverage \\
+\hline
+\textbf{Polarity Flipping} & Swap positive/negative event channels in spatial regions & Hardware errors in event generation circuits, silicon-level failures & 60-90\% flip probability, 15-45 pixel regions \\
+\hline
+\end{longtable}
+
+\subsubsection{Strategic Advantages}
+
+\begin{itemize}
+    \item \textbf{Balanced Dataset}: Equal normal/anomalous distribution prevents model bias
+    \item \textbf{Diverse Failure Modes}: Three complementary anomaly types cover different error scenarios
+    \item \textbf{Parameterized Generation}: Systematic, reproducible anomaly creation
+    \item \textbf{Real-world Relevance}: Each anomaly type corresponds to actual sensor failure modes
+\end{itemize}
+
+\section{Methodology}
+
+\subsection{Feature Definitions}
+
+We will extract both basic and advanced spatiotemporal features from the event streams:
+
+\textbf{Spatiotemporal Features:}
+\begin{itemize}
+    \item \textbf{Event Density}: Number of events per $32 \times 32$ spatial patch in 10-ms windows
+    \item \textbf{Time Surfaces}: Mean timestamps per patch
+    \item \textbf{Optical Flow}: Motion vector estimation over time
+\end{itemize}
+
+\textbf{Basic Features:}
+\begin{itemize}
+    \item \textbf{Event Rate}: Number of events per second
+    \item \textbf{Polarity Distribution}: Ratio of positive to negative events
+    \item \textbf{Event Position Coordinates}: Average spatial positions
+\end{itemize}
+
+\subsection{Encoder-Decoder Approach}
+
+\textbf{Architecture:}
+\begin{itemize}
+    \item \textbf{Encoder}: Compresses the input event stream into a latent feature representation
+    \item \textbf{Decoder}: Reconstructs the input from the latent features
+\end{itemize}
+
+\textbf{Anomaly Detection Strategy:}
+\begin{itemize}
+    \item Measure the reconstruction error (using mean squared error) between the input and the reconstructed output
+    \item Flag events with high reconstruction errors as potential anomalies, using a threshold based on the top 1\% (99th percentile) of reconstruction errors, as anomalies typically correspond to instances where the model struggles to accurately reconstruct the input
+\end{itemize}
+
+The encoder-decoder architecture will be initially implemented following standard design principles; however, modifications may be introduced during the experimental phase based on observed performance. As training progresses, adjustments to network depth, dimensionality, or regularization may be necessary to improve reconstruction accuracy and anomaly sensitivity.
+
+\section{Experimental Design}
+
+\subsection{Experimental Setup}
+
+\begin{itemize}
+    \item \textbf{Training}: The encoder-decoder network will be trained on the normal data (70\% of the dataset)
+    \item \textbf{Validation}: Hyperparameter tuning on validation set (15\% of the dataset)
+    \item \textbf{Testing}: Evaluate the model on the test data containing synthetic anomalies (15\%)
+\end{itemize}
+
+\subsection{Performance Assessment}
+
+Planning to use these key metrics for evaluating anomaly detection performance:
+
+\begin{itemize}
+    \item \textbf{Precision}: How many flagged anomalies are actual anomalies?
+    \item \textbf{Recall}: How many actual anomalies did the model detect?
+    \item \textbf{F1-Score}: Balance between precision and recall
+    \item \textbf{AUC-ROC}: Ability to distinguish anomalies from normal events across thresholds
+\end{itemize}
+
+\section{Implementation Details (Pseudocode)}
+
+The following pseudocode outlines the core implementation approach:
+
+\begin{lstlisting}[language=Python, basicstyle=\small\ttfamily, frame=single, breaklines=true]
+# Load and Preprocess Data
+full_data = load_data('./MVSEC')
+train, test = train_test_split(full_data, test_size=0.3)
+
+# === Data & Features ===
+normal_windows = split_windows(train, 10ms)
+test_windows = inject_anomalies(test, types=['blackout', 'vibration', 'flip'], ratio=50%)
+
+# Feature Extraction
+def basic_feat(window):
+    return [event_rate(window), polarity_ratio(window), avg_position(window)]
+
+def spatiotemporal_feat(window):
+    return basic_feat(window) + [event_density(window), 
+                                 time_surface(window), 
+                                 optical_flow(window)]
+
+# Train Models
+basic_train = [basic_feat(w) for w in normal_windows]
+st_train = [spatiotemporal_feat(w) for w in normal_windows]
+
+basic_model = train_autoencoder(basic_train, latent_dim=64)
+st_model = train_autoencoder(st_train, latent_dim=128)
+
+# Test & Compare
+basic_test = [basic_feat(w) for w in test_windows]
+st_test = [spatiotemporal_feat(w) for w in test_windows]
+
+def detect_anomalies(model, test_data):
+    errors = compute_mse(model.predict(test_data), test_data)
+    threshold = np.percentile(errors, 99)
+    return (errors > threshold).astype(int)
+
+basic_preds = detect_anomalies(basic_model, basic_test)
+st_preds = detect_anomalies(st_model, st_test)
+
+# Evaluate
+print("Basic Model:")
+print_metrics(true_labels, basic_preds)  # F1, AUC-ROC, etc.
+print("\nSpatiotemporal Model:")
+print_metrics(true_labels, st_preds)
+
+# Optional: Plot error distributions
+plot_hist(basic_preds, st_preds)
+\end{lstlisting}
+
+\section{Implementation Timeline}
+
+The thesis project is structured into overlapping phases to balance experimentation and documentation:
+
+\begin{itemize}
+    \item \textbf{Jan (Weeks 1--3): Data Preprocessing} \\
+          Clean and normalize neuromorphic data; visualize and verify event quality
+    \item \textbf{Mid-Jan to Early Feb (Weeks 2--5): Anomaly Simulation} \\
+          Design and inject synthetic anomalies (e.g., blackouts, flipped polarity, noise bursts) to simulate real-world failures
+    \item \textbf{Late Jan to Mid-Mar (Weeks 3--10): Model \& Feature Design} \\
+          Develop encoder-decoder models; engineer basic and spatiotemporal features
+    \item \textbf{Mar to Mid-May (Weeks 9--20): Training \& Validation} \\
+          Train models on normal data; evaluate reconstruction errors for anomaly detection
+    \item \textbf{May to Mid-Jun (Weeks 18--24): Performance Analysis} \\
+          Measure detection metrics (F1, AUC-ROC); conduct ablation studies
+    \item \textbf{Jun to Mid-Jul (Weeks 22--30): Anomaly Refinement} \\
+          Iterate on anomaly types; introduce more complex and dynamic distortions
+    \item \textbf{Jul to Mid-Aug (Weeks 27--34): Dataset Expansion} \\
+          Integrate modern datasets (e.g., DDD17); evaluate cross-dataset generalizability
+    \item \textbf{May to Sep (Weeks 21--39): Thesis Writing} \\
+          Document methodology, analysis, and results in parallel with technical work
+    \item \textbf{Oct to Mid-Nov (Weeks 40--45): Review \& Revisions} \\
+          Incorporate feedback and refine thesis content
+    \item \textbf{Nov (Weeks 44--48): Final Submission Prep} \\
+          Finalize formatting, proofreading, and packaging for submission
+    \item \textbf{Dec (Weeks 48--51): Buffer \& Wrap-Up} \\
+          Reserved time for contingencies and final presentation (if applicable)
+\end{itemize}
+
+\section{Expected Outcomes}
+
+This research aims to evaluate and compare the effectiveness of spatiotemporal features (e.g., event density, optical flow) versus basic features (e.g., event rate, polarity distribution) in detecting anomalies within neuromorphic event-based data. The expected outcomes include:
+
+\begin{enumerate}
+    \item \textbf{Enhanced Anomaly Detection Accuracy}: By leveraging spatiotemporal features, the proposed model is expected to improve the F1-score and overall detection performance compared to using basic features alone
+    
+    \item \textbf{Insights into Feature Effectiveness}: The research will provide a comparative analysis of basic versus spatiotemporal features, helping to determine which type (or combination) contributes most to accurate anomaly detection
+    
+    \item \textbf{Potential Input for Broader Neuromorphic Applications}: The framework can serve as a basis for future anomaly detection tasks in neuromorphic datasets beyond MVSEC, supporting diverse applications such as robotics, healthcare monitoring, and autonomous systems
+\end{enumerate}
+
+\section{Potential Challenges}
+
+\begin{itemize}
+    \item \textbf{Data Scarcity} -- Few labeled event-based datasets for anomaly detection exist
+    \item \textbf{Preprocessing Complexity} -- Sparse and noisy data require careful handling
+    \item \textbf{Computational Costs} -- Machine learning models require significant computing and memory resources
+    \item \textbf{Feature Exploration} -- Explore different features in the data to drive an impactful outcome
+\end{itemize}
+
+\section{Future Work Considerations}
+
+\begin{itemize}
+    \item Explore alternative machine learning techniques to improve performance
+    \item Investigate performance across different neuromorphic datasets
+    \item Develop more sophisticated anomaly generation techniques
+\end{itemize}
+
+\section{Preliminary References}
+
+\begin{itemize}
+    \item Gallego, G., Delbrück, T., Orchard, G. M., Bartolozzi, C., Taba, B., Censi, A., \ldots \& Scaramuzza, D. (2020). Event-based vision: A survey. \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)}. Available at: \url{https://ieeexplore.ieee.org/document/9138762}
+    
+    \item Shen, H., Luo, Y., Cao, X., Zhang, L., Xiao, J., \& Wang, T. (2022). Training Robust Spiking Neural Networks on Neuromorphic Data with Spatiotemporal Fragments (arXiv:2207.11659). \emph{arXiv}. Available at: \url{https://arxiv.org/abs/2207.11659}
+    
+    \item Amir, A., Taba, B., Berg, D., Melano, T., McKinstry, J., Di Nolfo, C., \ldots \& Flickner, M. D. (2017). A low-power, fully event-based gesture recognition system. \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}. Available at: \url{https://ieeexplore.ieee.org/document/8100264}
+    
+    \item Lagorce, X., Orchard, G., Galluppi, F., Shi, B. E., \& Benosman, R. (2017). HOTS: A hierarchy of event-based time-surfaces for pattern recognition. \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)}. Available at: \url{https://ieeexplore.ieee.org/document/7508476}
+\end{itemize}
+
+\end{document}

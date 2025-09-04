@@ -154,7 +154,7 @@ def create_system_overview_diagram():
     ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(0, 1))
     
     plt.tight_layout()
-    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/all_llms/system_architecture.png', 
+    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/anomly-detection/system_architecture.png', 
                 dpi=300, bbox_inches='tight')
     plt.show()
 
@@ -313,7 +313,7 @@ def create_data_flow_diagram():
     ax.text(9, 0.1, '4. Train neural networks to distinguish normal vs anomalous patterns', fontsize=11)
     
     plt.tight_layout()
-    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/all_llms/data_flow_diagram.png',
+    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/anomly-detection/data_flow_diagram.png',
                 dpi=300, bbox_inches='tight')
     plt.show()
 
@@ -431,7 +431,7 @@ def create_model_architecture_diagram():
         ax3.add_patch(arrow)
     
     plt.tight_layout()
-    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/all_llms/model_architectures.png',
+    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/anomly-detection/model_architectures.png',
                 dpi=300, bbox_inches='tight')
     plt.show()
 
@@ -514,7 +514,7 @@ def create_anomaly_strategy_diagram():
              ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
     
     plt.tight_layout()
-    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/all_llms/anomaly_strategy.png',
+    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/anomly-detection/anomaly_strategy.png',
                 dpi=300, bbox_inches='tight')
     plt.show()
 
@@ -615,7 +615,7 @@ def create_evaluation_framework_diagram():
             bbox=dict(boxstyle="round,pad=0.3", facecolor='lightyellow'))
     
     plt.tight_layout()
-    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/all_llms/evaluation_framework.png',
+    plt.savefig('/Users/eahmmoe/localWorkSpace/kth/anomly-detection/evaluation_framework.png',
                 dpi=300, bbox_inches='tight')
     plt.show()
 

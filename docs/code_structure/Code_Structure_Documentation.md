@@ -3,7 +3,7 @@
 ## 📁 **File Organization**
 
 ```
-kth/all_llms/
+kth/anomly-detection/
 ├── anomaly_detection.ipynb              # Main notebook implementation
 ├── MVSEC_Anomaly_Detection_Documentation.md  # Comprehensive documentation
 ├── Code_Structure_Documentation.md      # This file

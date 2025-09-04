@@ -67,7 +67,7 @@ cd overleaf/
 The project follows a clean, organized structure with clear separation between implementation, documentation, and analysis:
 
 ```
-kth/all_llms/
+kth/anomly-detection/
 ├── 📋 README.md                          # This file (main project overview)
 ├── ⚙️ pyproject.toml                     # Poetry configuration
 ├── 🔒 poetry.lock                        # Dependency lock file
@@ -109,7 +109,7 @@ kth/all_llms/
 │       └── [Runtime-generated analysis files]
 │
 ├── 💻 src/                               # Source code (if extracted)
-│   └── all_llms/
+│   └── anomly-detection/
 │       └── __init__.py
 │
 ├── 🧪 tests/                             # Unit tests

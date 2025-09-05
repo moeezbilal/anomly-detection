@@ -6,13 +6,13 @@
 
 ### **📁 What's Available**
 - **Technical Documentation**: Complete system specifications and implementation details
-- **Visual Diagrams**: System architecture and data flow visualizations  
+- **Visual Diagrams**: System architecture and data flow visualizations
 - **Code Structure Guides**: Implementation walkthrough and development guidelines
 - **Project Summary**: Executive overview and research contributions
 
 ### **📊 Documentation Statistics**
 - **Total Pages**: 80+ across all documents
-- **Visual Diagrams**: 5 comprehensive system diagrams  
+- **Visual Diagrams**: 5 comprehensive system diagrams
 - **Code Examples**: 50+ implementation snippets
 - **Cross-References**: Integrated navigation system
 
@@ -36,7 +36,7 @@
 - **[Class Hierarchy](./code_structure/Code_Structure_Documentation.md#class-architecture)** - Object relationships
 - **[Function Flow](./code_structure/Code_Structure_Documentation.md#function-flow-diagram)** - Execution patterns
 
-### Algorithm Specifications  
+### Algorithm Specifications
 - **[SNN Implementation](./MVSEC_Anomaly_Detection_Documentation.md#spiking-neural-network-implementation)** - Surrogate gradients, membrane dynamics
 - **[Anomaly Generation](./MVSEC_Anomaly_Detection_Documentation.md#anomaly-generation-strategy)** - Systematic injection methods
 - **[Training Framework](./MVSEC_Anomaly_Detection_Documentation.md#training-and-evaluation)** - Optimization and validation
@@ -123,7 +123,7 @@ python system_architecture_diagram.py
 
 ### **Documentation Updates**
 - **Code Changes**: Update code structure documentation
-- **New Features**: Extend technical documentation  
+- **New Features**: Extend technical documentation
 - **Performance Updates**: Update project summary
 
 ---

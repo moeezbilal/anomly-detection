@@ -11,7 +11,7 @@ This project implements a comprehensive anomaly detection system for neuromorphi
 - **Method**: End-to-end deep learning with minimal feature engineering
 - **Output**: Performance ranking of architectures with comprehensive metrics
 
-### **Feature Engineering Analysis** (`rq1_spatiotemporal_vs_basic_features.ipynb`)  
+### **Feature Engineering Analysis** (`rq1_spatiotemporal_vs_basic_features.ipynb`)
 - **Focus**: Feature comparison (basic vs spatiotemporal features)
 - **Method**: Traditional ML with extensive feature engineering (35 features)
 - **Output**: Feature effectiveness analysis with computational efficiency metrics
@@ -43,7 +43,7 @@ poetry shell
 # Architecture comparison approach
 jupyter notebook notebooks/anomaly_detection.ipynb
 
-# Feature engineering analysis approach  
+# Feature engineering analysis approach
 jupyter notebook notebooks/rq1_spatiotemporal_vs_basic_features.ipynb
 
 # View notebook comparison analysis
@@ -72,7 +72,7 @@ kth/anomly-detection/
 ├── ⚙️ pyproject.toml                     # Poetry configuration
 ├── 🔒 poetry.lock                        # Dependency lock file
 │
-├── 📓 notebooks/                         # Jupyter notebooks  
+├── 📓 notebooks/                         # Jupyter notebooks
 │   ├── anomaly_detection.ipynb          # Architecture comparison approach (SNN/RNN/TCN)
 │   ├── rq1_spatiotemporal_vs_basic_features.ipynb  # Feature analysis approach
 │   └── Notebook_Comparison_Analysis.tex # Detailed comparison of both approaches
@@ -116,7 +116,7 @@ kth/anomly-detection/
 │   └── __init__.py
 │
 └── 🔬 comprehensive_analysis/           # Automated analysis scripts
-    ├── README.md                        # Analysis directory guide  
+    ├── README.md                        # Analysis directory guide
     ├── run_comprehensive_analysis.py   # Main orchestrator script
     ├── rq1_feature_comparison.py      # Feature analysis automation
     └── rq1_algorithm_comparison.py    # Algorithm comparison automation
@@ -147,7 +147,7 @@ kth/anomly-detection/
 
 ### **Model Architectures**
 - ✅ **Spiking Neural Network (SNN)**: Bio-inspired processing with surrogate gradients
-- ✅ **Recurrent Neural Network (RNN)**: GRU-based sequential temporal modeling  
+- ✅ **Recurrent Neural Network (RNN)**: GRU-based sequential temporal modeling
 - ✅ **Temporal Convolutional Network (TCN)**: Dilated convolutions for parallel processing
 
 ### **Anomaly Types**
@@ -178,7 +178,7 @@ Key parameters can be adjusted in the notebook:
 ```python
 # Main configuration
 sequence = "indoor_flying"    # MVSEC sequence
-camera = "left"              # Camera selection  
+camera = "left"              # Camera selection
 num_epochs = 10              # Training epochs
 batch_size = 16              # Batch size
 anomaly_ratio = 0.5          # 50% anomalous data
@@ -196,7 +196,7 @@ For easy cloud execution:
 
 All dependencies managed through Poetry:
 - PyTorch (neural network implementation)
-- Tonic (neuromorphic data handling)  
+- Tonic (neuromorphic data handling)
 - NumPy, Matplotlib, Pandas (data processing)
 - Jupyter (notebook interface)
 - Scikit-learn (evaluation metrics)
@@ -218,7 +218,7 @@ For questions, issues, or collaboration opportunities, please open an issue or c
 
 ---
 
-**Status**: ✅ Complete implementation with comprehensive documentation  
-**Models**: SNN, RNN, TCN all implemented and compared  
-**Data**: Real MVSEC neuromorphic data integration  
+**Status**: ✅ Complete implementation with comprehensive documentation
+**Models**: SNN, RNN, TCN all implemented and compared
+**Data**: Real MVSEC neuromorphic data integration
 **Documentation**: 80+ pages of comprehensive guides and analysis

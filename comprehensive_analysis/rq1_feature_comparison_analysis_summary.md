@@ -1,15 +1,15 @@
 # Neuromorphic Anomaly Detection: Complete Code Analysis
 
 ---
-**📄 Source Code File**: `comprehensive_analysis/rq1_feature_comparison.py` (1007 lines)  
-**📅 Analysis Date**: August 21, 2025  
+**📄 Source Code File**: `comprehensive_analysis/rq1_feature_comparison.py` (1007 lines)
+**📅 Analysis Date**: August 21, 2025
 **🔍 Analysis Focus**: Feature engineering impact for neuromorphic anomaly detection
 ---
 
 ## Executive Summary
 
 ### Research Context
-- **File**: `rq1_feature_comparison.py` 
+- **File**: `rq1_feature_comparison.py`
 - **Research Question (RQ1-A)**: Which feature engineering approach works best for event-based anomaly detection?
 - **Methodology**: Compare 3 feature types using consistent algorithms for fair evaluation
 - **Total Features**: 64 features (15 Basic + 20 Spatiotemporal + 29 Neuromorphic)
@@ -26,7 +26,7 @@ The code implements a rigorous experimental framework to answer which features w
 """
 OBJECTIVE: Compare different FEATURE TYPES for neuromorphic anomaly detection
 - Basic Features (15): Statistical measures (event rates, spatial stats)
-- Spatiotemporal Features (20): Motion and flow analysis  
+- Spatiotemporal Features (20): Motion and flow analysis
 - Neuromorphic Features (29): Event-camera specific patterns
 
 APPROACH: Same algorithms tested on different feature sets (apples-to-apples)
@@ -50,7 +50,7 @@ def load_mvsec_data(data_path='../data', sequence='indoor_flying', camera='left'
 - **Robustness**: Handles multiple files, provides fallback options
 - **Output**: Event dictionary + sensor resolution
 
-#### **Event-to-Frame Conversion** (Lines 108-149)  
+#### **Event-to-Frame Conversion** (Lines 108-149)
 ```python
 def process_events_to_frames(events, sensor_size, num_frames=50, max_events=300000):
 ```
@@ -68,7 +68,7 @@ class AnomalyGenerator:
 ```
 **Three Anomaly Types**:
 - **'blackout'**: Reduces intensity in regions (sensor failure simulation)
-- **'vibration'**: Adds noise patterns (mechanical disturbance)  
+- **'vibration'**: Adds noise patterns (mechanical disturbance)
 - **'flip'**: Reverses polarity events (electrical interference)
 
 **Why Synthetic Anomalies**: Ensures controlled, reproducible anomaly patterns for supervised learning evaluation.
@@ -86,7 +86,7 @@ This addresses your key question about the extensive feature lists and extractio
 **1. Comprehensive Feature Space Coverage**
 Each feature type targets different data aspects:
 - **Basic (15 features)**: Tests if simple statistics suffice for anomaly detection
-- **Spatiotemporal (20 features)**: Exploits motion/temporal patterns common in video analysis  
+- **Spatiotemporal (20 features)**: Exploits motion/temporal patterns common in video analysis
 - **Neuromorphic (29 features)**: Leverages unique event-camera properties
 
 **2. Fair Comparison Methodology**
@@ -113,14 +113,14 @@ for i in range(num_frames):
 
 #### **Research Completeness Logic**
 
-**Avoid Incomplete Conclusions**: 
+**Avoid Incomplete Conclusions**:
 - Testing only 5-10 features per type might miss the most discriminative ones
 - Research requires testing the **full potential** of each approach
 - Allows definitive statements about feature type effectiveness
 
 **Algorithm-Feature Matching**:
 - **Random Forest**: Handles high-dimensional spaces well, implicit feature selection
-- **SVM**: Benefits from rich feature representations with proper scaling  
+- **SVM**: Benefits from rich feature representations with proper scaling
 - **Logistic Regression**: Shows if basic linear relationships suffice
 - **Gradient Boosting**: Finds complex feature interactions
 
@@ -135,13 +135,13 @@ for i in range(num_frames):
 # Event rate features (4)
 total_events = np.sum(combined_frame)
 pos_event_rate = np.sum(pos_events) / (H * W)
-neg_event_rate = np.sum(neg_events) / (H * W) 
+neg_event_rate = np.sum(neg_events) / (H * W)
 polarity_ratio = np.sum(pos_events) / (total_events + 1e-10)
 ```
 
 #### **Spatial Analysis**
 ```python
-# Regional activity (3) 
+# Regional activity (3)
 activity_regions = sum(1 for region in regions if np.sum(region) > 0)
 edge_activity = np.mean(combined_frame[edge_mask])
 center_activity = np.mean(combined_frame[~edge_mask])
@@ -166,7 +166,7 @@ def compute_optical_flow(self, frame1, frame2):
 density_map = self.compute_density_map(combined_frame)
 density_entropy = -np.sum(hist * np.log(hist))  # Information content
 
-# Flow coherence (1) 
+# Flow coherence (1)
 flow_coherence = 1.0 / (1.0 + np.std(flow_angle))
 ```
 
@@ -249,13 +249,13 @@ basic_time += time.time() - start_time
 ### **Why This Methodology Answers the Research Question**
 
 **1. Eliminates Algorithmic Bias**: Same ML algorithms test each feature type
-**2. Controls Variables**: Identical data preprocessing and anomaly injection  
+**2. Controls Variables**: Identical data preprocessing and anomaly injection
 **3. Measures Practical Costs**: Computational time for deployment feasibility
 **4. Comprehensive Coverage**: Tests full potential of each feature engineering approach
 
 ### **Expected Scientific Outcomes**
 
-**If Neuromorphic Features Win**: 
+**If Neuromorphic Features Win**:
 - Specialized event-camera features provide significant advantages
 - Time surfaces, clustering, polarity analysis capture unique anomaly signatures
 - Computational overhead justified by accuracy improvements
@@ -267,7 +267,7 @@ basic_time += time.time() - start_time
 
 **If Basic Features Win**:
 - Simple statistical measures surprisingly effective
-- Complex feature engineering may be unnecessary 
+- Complex feature engineering may be unnecessary
 - Computational efficiency favors deployment
 
 ---
@@ -279,7 +279,7 @@ basic_time += time.time() - start_time
 main() → run_feature_comparison_experiment() → create_feature_comparison_visualization()
 │
 ├── Data Loading (lines 51-105)
-├── Event Processing (lines 108-149) 
+├── Event Processing (lines 108-149)
 ├── Feature Extraction (lines 195-722)
 │   ├── BasicFeatureExtractor (15 features)
 │   ├── SpatiotemporalFeatureExtractor (20 features)
@@ -293,7 +293,7 @@ main() → run_feature_comparison_experiment() → create_feature_comparison_vis
 - **Line 108**: `process_events_to_frames()` - Event-to-frame conversion
 - **Line 152**: `AnomalyGenerator` - Controlled anomaly injection
 - **Line 195**: `BasicFeatureExtractor` - Statistical features (15)
-- **Line 270**: `SpatiotemporalFeatureExtractor` - Motion features (20)  
+- **Line 270**: `SpatiotemporalFeatureExtractor` - Motion features (20)
 - **Line 423**: `NeuromorphicFeatureExtractor` - Event-specific features (29)
 - **Line 724**: `run_feature_comparison_experiment()` - Main experiment
 - **Line 869**: `create_feature_comparison_visualization()` - Results analysis

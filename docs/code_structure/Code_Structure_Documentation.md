@@ -28,12 +28,12 @@ kth/anomly-detection/
 ```
 anomaly_detection.ipynb
 ├── 📖 [1] Project Overview & Documentation
-├── 🔧 [2] Environment Setup & Imports  
+├── 🔧 [2] Environment Setup & Imports
 ├── 💾 [3] Data Loading Configuration
 ├── 🔄 [4] Data Pipeline Documentation
 ├── 📥 [5] MVSEC Data Loading Functions
 ├── 🏗️ [6] Data Handler Class Implementation
-├── 🎭 [7] Anomaly Generation Documentation  
+├── 🎭 [7] Anomaly Generation Documentation
 ├── 🎲 [8] Anomaly Generator Implementation
 ├── 📦 [9] Dataset Creation Class
 ├── 🧠 [10] Neural Architecture Documentation
@@ -63,7 +63,7 @@ Anomaly Generation Layer:
 ├── AnomalyGenerator
 │   ├── __init__(seed)
 │   ├── add_blackout_region(frame, region_size, intensity)
-│   ├── add_vibration_noise(frame, region_size, intensity)  
+│   ├── add_vibration_noise(frame, region_size, intensity)
 │   ├── flip_polarities(frame, region_size, flip_prob)
 │   └── add_random_anomaly(frame, anomaly_type)
 
@@ -81,14 +81,14 @@ Model Layer:
 │   ├── Linear classification head
 │   └── reset_membrane_potentials()
 │
-├── RNNAnomalyDetector(nn.Module)  
+├── RNNAnomalyDetector(nn.Module)
 │   ├── Conv2d feature extraction (2x)
 │   ├── GRU temporal processing
 │   └── Linear classification head
 │
 └── TCNAnomalyDetector(nn.Module)
     ├── TemporalBlock layers (3x)
-    ├── Global average pooling  
+    ├── Global average pooling
     └── Linear classification head
 ```
 
@@ -106,14 +106,14 @@ graph TD
     F --> G[train_model]
     G --> H[test_model]
     H --> I[Visualization & Results]
-    
+
     B --> B1[load_data]
     B --> B2[preprocess_events]
     B --> B3[Frame resizing]
-    
+
     C --> C1[AnomalyGenerator.add_random_anomaly]
     C1 --> C2[Pre-generate all anomalies]
-    
+
     G --> G1[train_one_epoch loop]
     G1 --> G2[evaluate_model]
     G2 --> G3[Learning rate scheduling]
@@ -126,13 +126,13 @@ graph TD
 ```
 Raw MVSEC HDF5 Files
 └── Format: davis/left/events → [x, y, timestamp, polarity] arrays
-    
-Event Dictionary Extraction  
+
+Event Dictionary Extraction
 └── Structure: {'x': array, 'y': array, 't': array, 'p': array}
-    
+
 Temporal Binning Process
 ├── Time range division: t_min → t_max / num_frames
-├── Spatial mapping: (x,y) coordinates → pixel locations  
+├── Spatial mapping: (x,y) coordinates → pixel locations
 ├── Channel separation: polarity (+1/-1) → channels (0/1)
 └── Normalization: raw counts → [0, 1] intensity range
 
@@ -160,7 +160,7 @@ Final Dataset Structure
 ```python
 # Membrane Potential Dynamics
 V[t] = β * V[t-1] + I[t]              # Leaky integration
-S[t] = Heaviside(V[t] - θ)            # Spike generation  
+S[t] = Heaviside(V[t] - θ)            # Spike generation
 V[t] = V[t] - S[t] * θ                # Reset after spike
 
 # Surrogate Gradient for Backpropagation
@@ -168,7 +168,7 @@ V[t] = V[t] - S[t] * θ                # Reset after spike
 
 # Where:
 # β = membrane decay factor (0.9)
-# θ = firing threshold (1.0) 
+# θ = firing threshold (1.0)
 # α = surrogate gradient steepness (10.0)
 # I[t] = input current from previous layer
 ```
@@ -197,11 +197,11 @@ for frame_idx in range(num_frames):
 def generate_balanced_dataset(frames, anomaly_ratio=0.5):
     num_anomalies = int(len(frames) * anomaly_ratio)
     anomaly_indices = random.choice(len(frames), num_anomalies)
-    
+
     for idx in anomaly_indices:
         anomaly_type = random.choice(['blackout', 'vibration', 'flip'])
         frame[idx], mask[idx] = apply_anomaly(frame[idx], anomaly_type)
-        
+
     return labeled_dataset
 ```
 
@@ -230,7 +230,7 @@ def generate_balanced_dataset(frames, anomaly_ratio=0.5):
 ### **Computational Efficiency**
 
 1. **Spatial Downsampling**: 260×346 → 64×64 resolution
-2. **Temporal Compression**: ~25M events → 50 frame sequence  
+2. **Temporal Compression**: ~25M events → 50 frame sequence
 3. **Channel Optimization**: Separate pos/neg processing pipelines
 4. **Model Simplification**: Focused architectures with minimal parameters
 
@@ -287,11 +287,11 @@ class AnomalyGenerator:
         """Template for new anomaly types"""
         modified_frame = frame.clone()
         anomaly_mask = torch.zeros_like(frame[0], dtype=torch.bool)
-        
+
         # Custom anomaly implementation here
-        
+
         return modified_frame, anomaly_mask
-    
+
     def register_anomaly_type(self, name, function):
         """Dynamic anomaly registration"""
         self.anomaly_types[name] = function
@@ -305,7 +305,7 @@ class NewArchitectureDetector(nn.Module):
     def __init__(self, input_channels, **kwargs):
         super().__init__()
         # Architecture-specific initialization
-        
+
     def forward(self, x):
         # Architecture-specific forward pass
         return output
@@ -318,7 +318,7 @@ class NewArchitectureDetector(nn.Module):
 CONFIG = {
     'data': {
         'sequence': 'indoor_flying',
-        'camera': 'left', 
+        'camera': 'left',
         'max_events': 500000,
         'sensor_size': (64, 64),
         'num_frames': 50
@@ -349,7 +349,7 @@ def test_data_loading():
     assert sensor_size == (260, 346)
 
 def test_anomaly_generation():
-    """Test anomaly injection methods"""  
+    """Test anomaly injection methods"""
     frame = torch.rand(2, 64, 64)
     anomaly_frame, mask = add_blackout_region(frame, (20, 20))
     assert not torch.equal(frame, anomaly_frame)

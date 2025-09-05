@@ -41,7 +41,7 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=kthblue,
-    filecolor=magenta,      
+    filecolor=magenta,
     urlcolor=cyan,
     citecolor=kthblue
 }
@@ -254,8 +254,8 @@ def basic_feat(window):
     return [event_rate(window), polarity_ratio(window), avg_position(window)]
 
 def spatiotemporal_feat(window):
-    return basic_feat(window) + [event_density(window), 
-                                 time_surface(window), 
+    return basic_feat(window) + [event_density(window),
+                                 time_surface(window),
                                  optical_flow(window)]
 
 # Train Models
@@ -322,9 +322,9 @@ This research aims to evaluate and compare the effectiveness of spatiotemporal f
 
 \begin{enumerate}
     \item \textbf{Enhanced Anomaly Detection Accuracy}: By leveraging spatiotemporal features, the proposed model is expected to improve the F1-score and overall detection performance compared to using basic features alone
-    
+
     \item \textbf{Insights into Feature Effectiveness}: The research will provide a comparative analysis of basic versus spatiotemporal features, helping to determine which type (or combination) contributes most to accurate anomaly detection
-    
+
     \item \textbf{Potential Input for Broader Neuromorphic Applications}: The framework can serve as a basis for future anomaly detection tasks in neuromorphic datasets beyond MVSEC, supporting diverse applications such as robotics, healthcare monitoring, and autonomous systems
 \end{enumerate}
 
@@ -349,11 +349,11 @@ This research aims to evaluate and compare the effectiveness of spatiotemporal f
 
 \begin{itemize}
     \item Gallego, G., Delbrück, T., Orchard, G. M., Bartolozzi, C., Taba, B., Censi, A., \ldots \& Scaramuzza, D. (2020). Event-based vision: A survey. \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)}. Available at: \url{https://ieeexplore.ieee.org/document/9138762}
-    
+
     \item Shen, H., Luo, Y., Cao, X., Zhang, L., Xiao, J., \& Wang, T. (2022). Training Robust Spiking Neural Networks on Neuromorphic Data with Spatiotemporal Fragments (arXiv:2207.11659). \emph{arXiv}. Available at: \url{https://arxiv.org/abs/2207.11659}
-    
+
     \item Amir, A., Taba, B., Berg, D., Melano, T., McKinstry, J., Di Nolfo, C., \ldots \& Flickner, M. D. (2017). A low-power, fully event-based gesture recognition system. \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}. Available at: \url{https://ieeexplore.ieee.org/document/8100264}
-    
+
     \item Lagorce, X., Orchard, G., Galluppi, F., Shi, B. E., \& Benosman, R. (2017). HOTS: A hierarchy of event-based time-surfaces for pattern recognition. \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)}. Available at: \url{https://ieeexplore.ieee.org/document/7508476}
 \end{itemize}
 

@@ -94,7 +94,7 @@ Based on the implementation and data characteristics:
 
 ### **Research Impact**
 - **Neuromorphic Computing**: Advances bio-inspired processing for event cameras
-- **Autonomous Systems**: Robust anomaly detection for safety-critical applications  
+- **Autonomous Systems**: Robust anomaly detection for safety-critical applications
 - **Computer Vision**: Novel approaches to sparse, asynchronous visual data
 - **Machine Learning**: Systematic evaluation of temporal sequence models
 
@@ -123,7 +123,7 @@ events, sensor_size = load_mvsec_data('./data', 'indoor_flying', 'left')
 # 2. Run complete pipeline
 results = run_mvsec_anomaly_detection_pipeline(
     data_path='./data',
-    sequence='indoor_flying', 
+    sequence='indoor_flying',
     num_epochs=5
 )
 

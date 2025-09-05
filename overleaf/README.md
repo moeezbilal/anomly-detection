@@ -4,7 +4,7 @@ This directory contains professional LaTeX documents ready for compilation in Ov
 
 ## 📄 **Professional LaTeX Documents**
 
-### **1. Thesis Project Plan** 
+### **1. Thesis Project Plan**
 **File:** `2025_MA_Moeez_Thesis_Project_Plan.tex`
 - **Purpose:** Official academic thesis project plan
 - **Content:** Research questions, methodology, timeline, MVSEC dataset specifications
@@ -21,7 +21,7 @@ This directory contains professional LaTeX documents ready for compilation in Ov
 ### **3. Notebook Comparison Analysis**
 **File:** `../notebooks/Notebook_Comparison_Analysis.tex` (Reference)
 - **Purpose:** Detailed comparison of architecture vs feature-based approaches
-- **Content:** Scope, output, and technical differences analysis  
+- **Content:** Scope, output, and technical differences analysis
 - **Status:** Comprehensive analysis document
 - **Length:** ~30 pages of systematic approach comparison
 
@@ -37,7 +37,7 @@ This directory contains professional LaTeX documents ready for compilation in Ov
 # Compile thesis project plan
 pdflatex 2025_MA_Moeez_Thesis_Project_Plan.tex
 
-# Compile technical guide  
+# Compile technical guide
 pdflatex MVSEC_Anomaly_Detection_Code_Guide.tex
 ```
 
@@ -65,7 +65,7 @@ pdflatex MVSEC_Anomaly_Detection_Code_Guide.tex
 
 Both documents require these LaTeX packages:
 - `times` (font)
-- `amsmath`, `amsfonts`, `amssymb` (mathematics)  
+- `amsmath`, `amsfonts`, `amssymb` (mathematics)
 - `tikz`, `pgfplots` (diagrams)
 - `listings` (code highlighting)
 - `hyperref` (links and references)

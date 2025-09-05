@@ -7,7 +7,7 @@ This directory contains analysis scripts that complement the main notebook imple
 ### 📊 **Architecture-Based Analysis** (Complements `anomaly_detection.ipynb`)
 - **Focus**: Neural network architecture performance comparison
 - **Approach**: SNN vs RNN vs TCN evaluation framework
-- **Method**: End-to-end deep learning with comprehensive metrics  
+- **Method**: End-to-end deep learning with comprehensive metrics
 - **Alignment**: Extends the architecture comparison from the main notebook
 
 ### 🤖 **Feature-Based Analysis** (Complements `rq1_spatiotemporal_vs_basic_features.ipynb`)
@@ -20,14 +20,14 @@ This directory contains analysis scripts that complement the main notebook imple
 
 This analysis directory provides **automated scripts** that replicate and extend the manual analysis performed in:
 - `../notebooks/anomaly_detection.ipynb` - Manual architecture comparison
-- `../notebooks/rq1_spatiotemporal_vs_basic_features.ipynb` - Manual feature analysis  
+- `../notebooks/rq1_spatiotemporal_vs_basic_features.ipynb` - Manual feature analysis
 - `../notebooks/Notebook_Comparison_Analysis.tex` - Comparative analysis documentation
 
 ## 🔄 **Analysis Structure**
 
 **Two-Phase Approach**:
 - **Phase 1**: Feature engineering impact analysis (like `rq1_spatiotemporal_vs_basic_features.ipynb`)
-- **Phase 2**: Architecture approach comparison (like `anomaly_detection.ipynb`)  
+- **Phase 2**: Architecture approach comparison (like `anomaly_detection.ipynb`)
 - **Integration**: Combined insights from both approaches
 
 **Benefits**:
@@ -59,7 +59,7 @@ python run_comprehensive_analysis.py
 # Part A only - Feature comparison
 python rq1_feature_comparison.py
 
-# Part B only - Algorithm comparison  
+# Part B only - Algorithm comparison
 python rq1_algorithm_comparison.py
 ```
 

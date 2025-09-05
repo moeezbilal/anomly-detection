@@ -75,7 +75,7 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=kthblue,
-    filecolor=magenta,      
+    filecolor=magenta,
     urlcolor=cyan,
     citecolor=kthblue,
     pdftitle={MVSEC Anomaly Detection Technical Guide},
@@ -272,12 +272,12 @@ The Multi-Vehicle Stereo Event Camera (MVSEC) dataset provides real-world event 
 def load_mvsec_data(data_path, sequence='indoor_flying', camera='left'):
     """
     Load MVSEC dataset from HDF5 files
-    
+
     Args:
         data_path: Path to MVSEC data directory
         sequence: Which sequence to use
         camera: Which camera ('left' or 'right')
-    
+
     Returns:
         events: Dictionary with event data (x, y, t, p)
         sensor_size: Camera resolution tuple
@@ -285,15 +285,15 @@ def load_mvsec_data(data_path, sequence='indoor_flying', camera='left'):
     with h5py.File(data_file, 'r') as f:
         # Navigate to camera events
         events_data = f['davis'][camera]['events'][:]
-        
+
         # Extract event components
         events = {
             'x': events_data[:, 0].astype(int),
-            'y': events_data[:, 1].astype(int), 
+            'y': events_data[:, 1].astype(int),
             't': events_data[:, 2],
             'p': events_data[:, 3].astype(int)
         }
-        
+
         return events, (260, 346)  # DAVIS 346B resolution
 \end{lstlisting}
 
@@ -360,46 +360,46 @@ Event streams are continuous and asynchronous. For neural network processing, we
 def preprocess_events(self, events, num_frames=50):
     """
     Convert continuous event stream to discrete frame sequence
-    
+
     Args:
         events: Event dictionary {x, y, t, p}
         num_frames: Number of frames to generate
-    
+
     Returns:
         frames: Tensor (num_frames, 2, H, W)
                 Channel 0: positive events
                 Channel 1: negative events
     """
     x, y, t, p = events['x'], events['y'], events['t'], events['p']
-    
+
     # Create uniform time bins
     t_min, t_max = np.min(t), np.max(t)
     time_bins = np.linspace(t_min, t_max, num_frames + 1)
-    
+
     # Initialize frame tensor
     H, W = self.sensor_size
     frames = torch.zeros((num_frames, 2, H, W))
-    
+
     # Bin events into frames
     for i in range(len(x)):
         # Find time bin
         bin_idx = np.searchsorted(time_bins[1:], t[i])
         bin_idx = min(bin_idx, num_frames - 1)
-        
+
         # Map polarity to channel
         channel = 0 if p[i] == 1 else 1
-        
+
         # Accumulate event
         if 0 <= y[i] < H and 0 <= x[i] < W:
             frames[bin_idx, channel, y[i], x[i]] += 1
-    
+
     # Normalize frames
     for f in range(num_frames):
         for c in range(2):
             max_val = frames[f, c].max()
             if max_val > 0:
                 frames[f, c] /= max_val
-    
+
     return frames
 \end{lstlisting}
 
@@ -475,33 +475,33 @@ Since natural anomalies in event data are rare and unlabeled, we employ systemat
 def add_blackout_region(self, frame, region_size=(20, 20), intensity=1.0):
     """
     Simulate sensor failure by zeroing out spatial region
-    
+
     Args:
         frame: Input frame tensor (C, H, W)
         region_size: Size of blackout region (height, width)
         intensity: Blackout intensity (0.0-1.0)
-    
+
     Returns:
         frame_with_anomaly: Modified frame
         mask: Binary mask showing anomaly location
     """
     C, H, W = frame.shape
     rh, rw = region_size
-    
+
     frame_with_anomaly = frame.clone()
-    
+
     # Random position
     y = self.rng.randint(0, H - rh - 1)
     x = self.rng.randint(0, W - rw - 1)
-    
+
     # Create mask
     mask = torch.zeros((H, W), dtype=torch.bool)
     mask[y:y+rh, x:x+rw] = True
-    
+
     # Apply blackout
     for c in range(C):
         frame_with_anomaly[c][mask] *= (1 - intensity)
-    
+
     return frame_with_anomaly, mask
 \end{lstlisting}
 
@@ -525,35 +525,35 @@ def add_blackout_region(self, frame, region_size=(20, 20), intensity=1.0):
 def add_vibration_noise(self, frame, region_size=(40, 40), intensity=0.5):
     """
     Simulate camera shake with additive Gaussian noise
-    
+
     Args:
         frame: Input frame tensor (C, H, W)
         region_size: Size of vibration region
         intensity: Noise intensity
-    
+
     Returns:
         frame_with_anomaly: Modified frame
         mask: Binary mask showing anomaly location
     """
     C, H, W = frame.shape
     rh, rw = region_size
-    
+
     frame_with_anomaly = frame.clone()
-    
+
     # Random position
     y = self.rng.randint(0, H - rh - 1)
     x = self.rng.randint(0, W - rw - 1)
-    
+
     # Create mask
     mask = torch.zeros((H, W), dtype=torch.bool)
     mask[y:y+rh, x:x+rw] = True
-    
+
     # Add noise
     for c in range(C):
         noise = torch.randn(rh, rw) * intensity
         frame_with_anomaly[c][y:y+rh, x:x+rw] += noise
         frame_with_anomaly[c] = torch.clamp(frame_with_anomaly[c], 0, 1)
-    
+
     return frame_with_anomaly, mask
 \end{lstlisting}
 
@@ -576,39 +576,39 @@ def add_vibration_noise(self, frame, region_size=(40, 40), intensity=0.5):
 def flip_polarities(self, frame, region_size=(30, 30), flip_prob=0.8):
     """
     Simulate hardware errors by flipping event polarities
-    
+
     Args:
         frame: Input frame tensor (2, H, W) - pos/neg channels
         region_size: Size of flip region
         flip_prob: Probability of flipping each pixel
-    
+
     Returns:
         frame_with_anomaly: Modified frame
         mask: Binary mask showing anomaly location
     """
     C, H, W = frame.shape
     assert C == 2, "Polarity flipping requires 2-channel input"
-    
+
     rh, rw = region_size
     frame_with_anomaly = frame.clone()
-    
+
     # Random position
     y = self.rng.randint(0, H - rh - 1)
     x = self.rng.randint(0, W - rw - 1)
-    
+
     # Create masks
     mask = torch.zeros((H, W), dtype=torch.bool)
     mask[y:y+rh, x:x+rw] = True
     flip_mask = torch.rand(rh, rw) < flip_prob
-    
+
     # Store original values
     pos_events = frame_with_anomaly[0, y:y+rh, x:x+rw].clone()
     neg_events = frame_with_anomaly[1, y:y+rh, x:x+rw].clone()
-    
+
     # Apply flipping
     frame_with_anomaly[0, y:y+rh, x:x+rw][flip_mask] = neg_events[flip_mask]
     frame_with_anomaly[1, y:y+rh, x:x+rw][flip_mask] = pos_events[flip_mask]
-    
+
     return frame_with_anomaly, mask
 \end{lstlisting}
 
@@ -674,7 +674,7 @@ class SurrogateSpike(torch.autograd.Function):
         ctx.save_for_backward(input)
         ctx.alpha = alpha
         return (input > 0).float()  # Heaviside step
-    
+
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_tensors
@@ -707,7 +707,7 @@ class SpikingNeuron(nn.Module):
     def __init__(self, beta=0.9, threshold=1.0, reset_mode='subtract'):
         """
         Leaky Integrate-and-Fire neuron model
-        
+
         Args:
             beta: Membrane potential decay factor
             threshold: Spike threshold
@@ -717,34 +717,34 @@ class SpikingNeuron(nn.Module):
         self.beta = beta
         self.threshold = threshold
         self.reset_mode = reset_mode
-    
+
     def forward(self, input_current, mem=None):
         """
         Neuron dynamics: V[t] = β*V[t-1] + I[t]
-        
+
         Args:
             input_current: Input current at time t
             mem: Previous membrane potential
-        
+
         Returns:
             spike: Output spike (0 or 1)
             mem: Updated membrane potential
         """
         if mem is None:
             mem = torch.zeros_like(input_current)
-        
+
         # Update membrane potential
         mem = self.beta * mem + input_current
-        
+
         # Generate spikes
         spike = surrogate_spike(mem - self.threshold)
-        
+
         # Reset mechanism
         if self.reset_mode == 'subtract':
             mem = mem - spike * self.threshold
         elif self.reset_mode == 'zero':
             mem = mem * (1 - spike)
-        
+
         return spike, mem
 \end{lstlisting}
 
@@ -769,46 +769,46 @@ class SpikingAnomalyDetector(nn.Module):
     def __init__(self, input_channels=2, hidden_channels=16, output_dim=2):
         """
         SNN for event-based anomaly detection
-        
+
         Architecture:
         - Convolutional spiking layers with downsampling
         - Global average pooling
         - Fully connected classifier
         """
         super().__init__()
-        
-        self.conv1 = SpikingConv2d(input_channels, hidden_channels, 
+
+        self.conv1 = SpikingConv2d(input_channels, hidden_channels,
                                    kernel_size=3, stride=2, padding=1)
-        self.conv2 = SpikingConv2d(hidden_channels, hidden_channels*2, 
+        self.conv2 = SpikingConv2d(hidden_channels, hidden_channels*2,
                                    kernel_size=3, stride=2, padding=1)
-        self.conv3 = SpikingConv2d(hidden_channels*2, hidden_channels*4, 
+        self.conv3 = SpikingConv2d(hidden_channels*2, hidden_channels*4,
                                    kernel_size=3, stride=2, padding=1)
-        
+
         self.fc = nn.Linear(hidden_channels*4, output_dim)
-    
+
     def forward(self, x):
         """
         Forward pass through SNN
-        
+
         Args:
             x: Input tensor (B, C, H, W)
-        
+
         Returns:
             output: Classification logits
         """
         batch_size = x.size(0)
-        
+
         # Spiking convolutions (reset membrane each forward pass)
         spike1, _ = self.conv1(x, None)
         spike2, _ = self.conv2(spike1, None)
         spike3, _ = self.conv3(spike2, None)
-        
+
         # Global average pooling
         pooled = F.adaptive_avg_pool2d(spike3, (1, 1)).view(batch_size, -1)
-        
+
         # Classification
         output = self.fc(pooled)
-        
+
         return output
 \end{lstlisting}
 
@@ -832,49 +832,49 @@ class RNNAnomalyDetector(nn.Module):
     def __init__(self, input_channels=2, hidden_dim=64, output_dim=2, input_size=(64, 64)):
         """
         RNN-based anomaly detector with CNN feature extraction
-        
+
         Architecture:
         - CNN feature extraction
         - GRU for temporal modeling
         - Fully connected classifier
         """
         super().__init__()
-        
+
         # Convolutional feature extraction
         self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=2, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1)
-        
+
         # Calculate feature dimensions after convolutions
         h_out = input_size[0] // 4
         w_out = input_size[1] // 4
         self.feature_dim = 32 * h_out * w_out
-        
+
         # GRU for temporal processing
         self.rnn = nn.GRU(self.feature_dim, hidden_dim, batch_first=True)
-        
+
         # Classification head
         self.fc = nn.Linear(hidden_dim, output_dim)
-    
+
     def forward(self, x):
         """
         Forward pass through RNN detector
         """
         batch_size = x.size(0)
-        
+
         # CNN feature extraction
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        
+
         # Reshape for RNN (treat as sequence length 1)
         x = x.view(batch_size, 1, -1)
-        
+
         # RNN processing
         x, _ = self.rnn(x)
         x = x[:, -1, :]  # Take last output
-        
+
         # Classification
         output = self.fc(x)
-        
+
         return output
 \end{lstlisting}
 
@@ -899,17 +899,17 @@ class TemporalBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, dilation, padding):
         """
         Temporal block with dilated convolutions
-        
+
         Args:
             dilation: Dilation factor for receptive field expansion
         """
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size, 
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size,
                               padding=padding, dilation=dilation)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.2)
-    
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -921,11 +921,11 @@ class TCNAnomalyDetector(nn.Module):
     def __init__(self, input_channels=2, hidden_channels=[16, 32, 64], kernel_size=3, output_dim=2):
         """
         TCN with exponentially increasing dilation
-        
+
         Receptive field grows as: RF = 1 + 2*(2^0 + 2^1 + ... + 2^(L-1))
         """
         super().__init__()
-        
+
         # Create temporal blocks with increasing dilation
         layers = []
         num_levels = len(hidden_channels)
@@ -934,23 +934,23 @@ class TCNAnomalyDetector(nn.Module):
             in_ch = input_channels if i == 0 else hidden_channels[i-1]
             out_ch = hidden_channels[i]
             padding = (kernel_size - 1) * dilation // 2
-            
+
             layers.append(TemporalBlock(in_ch, out_ch, kernel_size, dilation, padding))
-        
+
         self.tcn_blocks = nn.Sequential(*layers)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(hidden_channels[-1], output_dim)
-    
+
     def forward(self, x):
         batch_size = x.size(0)
-        
+
         # Apply TCN blocks
         x = self.tcn_blocks(x)
-        
+
         # Global pooling and classification
         x = self.global_pool(x).view(batch_size, -1)
         output = self.fc(x)
-        
+
         return output
 \end{lstlisting}
 
@@ -975,7 +975,7 @@ class TCNAnomalyDetector(nn.Module):
 def initialize_training(model, lr=0.001):
     """
     Initialize training components
-    
+
     Returns:
         criterion: CrossEntropyLoss for binary classification
         optimizer: Adam optimizer with learning rate scheduling
@@ -986,7 +986,7 @@ def initialize_training(model, lr=0.001):
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=3
     )
-    
+
     return criterion, optimizer, scheduler
 \end{lstlisting}
 
@@ -1015,36 +1015,36 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
     epoch_loss = 0
     correct = 0
     total = 0
-    
+
     # Reset SNN membrane potentials
     if hasattr(model, 'reset_membrane_potentials'):
         model.reset_membrane_potentials()
-    
+
     for batch in train_loader:
         frames, labels, masks = batch[0], batch[1], batch[2]
         frames = frames.to(device)
         labels = labels.to(device)
-        
+
         optimizer.zero_grad()
-        
+
         # Forward pass
         outputs = model(frames)
         loss = criterion(outputs, labels)
-        
+
         # Backward pass (special handling for SNN)
         if isinstance(model, SpikingAnomalyDetector):
             loss.backward(retain_graph=True)  # Avoid gradient computation issues
         else:
             loss.backward()
-        
+
         optimizer.step()
-        
+
         # Track metrics
         epoch_loss += loss.item() * frames.size(0)
         _, predicted = torch.max(outputs, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
-    
+
     return epoch_loss / total, 100 * correct / total
 \end{lstlisting}
 
@@ -1071,7 +1071,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
 def test_model(model, test_loader, device='cpu'):
     """
     Comprehensive model evaluation with multiple metrics
-    
+
     Returns:
         metrics: Dictionary containing:
             - accuracy, precision, recall, f1
@@ -1079,38 +1079,38 @@ def test_model(model, test_loader, device='cpu'):
             - confusion_matrix
     """
     model.eval()
-    
+
     all_preds = []
     all_labels = []
     all_probs = []
-    
+
     with torch.no_grad():
         for batch in test_loader:
             frames, labels, masks = batch[0], batch[1], batch[2]
             frames = frames.to(device)
             labels = labels.to(device)
-            
+
             outputs = model(frames)
             probs = F.softmax(outputs, dim=1)
             _, preds = torch.max(outputs, 1)
-            
+
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
             all_probs.extend(probs[:, 1].cpu().numpy())  # Anomaly class probability
-    
+
     # Calculate comprehensive metrics
     accuracy = accuracy_score(all_labels, all_preds)
     precision = precision_score(all_labels, all_preds, zero_division=0)
     recall = recall_score(all_labels, all_preds, zero_division=0)
     f1 = f1_score(all_labels, all_preds, zero_division=0)
-    
+
     # ROC curve and AUC
     fpr, tpr, _ = roc_curve(all_labels, all_probs)
     roc_auc = auc(fpr, tpr)
-    
+
     # Confusion matrix
     cm = confusion_matrix(all_labels, all_preds)
-    
+
     return {
         'accuracy': accuracy, 'precision': precision, 'recall': recall,
         'f1': f1, 'roc_auc': roc_auc, 'fpr': fpr, 'tpr': tpr,
@@ -1140,18 +1140,18 @@ def test_model(model, test_loader, device='cpu'):
 def plot_roc_curves(metrics_dict):
     """
     Plot ROC curves for multiple models
-    
+
     Args:
         metrics_dict: {model_name: metrics} dictionary
     """
     plt.figure(figsize=(8, 6))
-    
+
     for model_name, metrics in metrics_dict.items():
         fpr = metrics['fpr']
         tpr = metrics['tpr']
         roc_auc = metrics['roc_auc']
         plt.plot(fpr, tpr, lw=2, label=f'{model_name} (AUC = {roc_auc:.3f})')
-    
+
     plt.plot([0, 1], [0, 1], 'k--', lw=2, label='Random')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -1188,86 +1188,86 @@ def plot_roc_curves(metrics_dict):
 
 \begin{lstlisting}[caption={Complete Pipeline Implementation - System Orchestrator Function}]
 def run_mvsec_anomaly_detection_pipeline(
-    data_path='./data', 
-    sequence='indoor_flying', 
+    data_path='./data',
+    sequence='indoor_flying',
     camera='left',
-    sensor_size=(64, 64), 
-    num_frames=50, 
+    sensor_size=(64, 64),
+    num_frames=50,
     max_events=500000,
-    anomaly_ratio=0.5, 
-    batch_size=8, 
-    num_epochs=3, 
+    anomaly_ratio=0.5,
+    batch_size=8,
+    num_epochs=3,
     device='cpu'
 ):
     """
     Complete MVSEC anomaly detection pipeline
-    
+
     This function orchestrates the entire process:
     1. Data loading and preprocessing
     2. Anomaly injection and dataset creation
     3. Model training (SNN, RNN, TCN)
     4. Evaluation and comparison
-    
+
     Returns:
         results: Dictionary with trained models and metrics
     """
     print("MVSEC Anomaly Detection Pipeline")
     print("=" * 40)
-    
+
     # Step 1: Load and preprocess MVSEC data
     data_handler = MVSECDataHandler(data_path, sequence, camera, sensor_size)
     frames = data_handler.create_dataset(num_frames, sensor_size, max_events)
-    
+
     # Step 2: Create balanced anomaly dataset
     dataset = EventAnomalyDataset(frames, anomaly_ratio)
-    
+
     # Step 3: Create train/validation/test splits
     total_size = len(dataset)
     train_size = int(0.7 * total_size)
     val_size = int(0.15 * total_size)
     test_size = total_size - train_size - val_size
-    
+
     train_dataset, val_dataset, test_dataset = random_split(
         dataset, [train_size, val_size, test_size]
     )
-    
+
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size)
     test_loader = DataLoader(test_dataset, batch_size)
-    
+
     # Step 4: Initialize models
     input_channels = frames.shape[1]  # Should be 2 for event data
-    
+
     models = {
         'SNN': SpikingAnomalyDetector(input_channels=input_channels),
         'RNN': RNNAnomalyDetector(input_channels=input_channels, input_size=sensor_size),
         'TCN': TCNAnomalyDetector(input_channels=input_channels)
     }
-    
+
     # Step 5: Train and evaluate all models
     results = {'models': {}, 'metrics': {}}
-    
+
     for model_name, model in models.items():
         print(f"\nTraining {model_name} model...")
-        
+
         # Train model
         trained_model, train_losses, val_losses, train_acc, val_acc = train_model(
             model, train_loader, val_loader, num_epochs, device=device
         )
-        
+
         # Evaluate model
         test_metrics = test_model(trained_model, test_loader, device)
-        
+
         # Store results
         results['models'][model_name] = trained_model
         results['metrics'][model_name] = test_metrics
-        
+
         print(f"{model_name} Results - Acc: {test_metrics['accuracy']:.3f}, "
               f"F1: {test_metrics['f1']:.3f}, AUC: {test_metrics['roc_auc']:.3f}")
-    
+
     # Step 6: Generate comparison visualizations
     plot_roc_curves(results['metrics'])
-    
+
     return results
 \end{lstlisting}
 
@@ -1332,21 +1332,21 @@ Based on the architectural differences, we expect the following performance patt
         \item Apply quantization for memory reduction
         \item Optimize batch sizes for target hardware
     \end{itemize}
-    
+
     \item \textbf{Data Pipeline Optimization}
     \begin{itemize}
         \item Implement streaming data processing
         \item Add data validation and error handling
         \item Optimize memory usage for large event streams
     \end{itemize}
-    
+
     \item \textbf{Monitoring and Logging}
     \begin{itemize}
         \item Add performance metrics logging
         \item Implement model drift detection
         \item Set up anomaly detection alerts
     \end{itemize}
-    
+
     \item \textbf{Scalability}
     \begin{itemize}
         \item Design for horizontal scaling
@@ -1384,7 +1384,7 @@ Storage & 100GB SSD & 500GB NVMe & For dataset and model storage \\
         \item Dynamic occlusion patterns
         \item Multi-scale anomalies
     \end{itemize}
-    
+
     \item \textbf{Architecture Enhancements}
     \begin{itemize}
         \item Attention mechanisms for event data
@@ -1392,7 +1392,7 @@ Storage & 100GB SSD & 500GB NVMe & For dataset and model storage \\
         \item Multi-scale temporal processing
         \item Ensemble methods combining architectures
     \end{itemize}
-    
+
     \item \textbf{Dataset Expansion}
     \begin{itemize}
         \item Integration with DDD20 driving dataset
@@ -1400,7 +1400,7 @@ Storage & 100GB SSD & 500GB NVMe & For dataset and model storage \\
         \item Cross-domain transfer learning
         \item Synthetic event generation
     \end{itemize}
-    
+
     \item \textbf{Real-Time Processing}
     \begin{itemize}
         \item Online learning capabilities
@@ -1511,7 +1511,7 @@ Epoch 2/3 - Train loss: 0.5234, Train acc: 74.29%, Val loss: 0.4876, Val acc: 85
 for epoch in range(num_epochs):
     epoch_loss, epoch_accuracy = train_one_epoch(model, train_loader, ...)
     val_loss, val_accuracy = evaluate_model(model, val_loader, ...)
-    
+
     print(f"Epoch {epoch+1}/{num_epochs} - "
           f"Train loss: {epoch_loss:.4f}, Train acc: {epoch_accuracy:.2f}%, "
           f"Val loss: {val_loss:.4f}, Val acc: {val_accuracy:.2f}%")
@@ -1895,11 +1895,11 @@ To add a new anomaly type, extend the \texttt{AnomalyGenerator} class:
 \begin{lstlisting}[caption={Adding Custom Anomaly Type}]
 class AnomalyGenerator:
     # ... existing methods ...
-    
+
     def add_temporal_gaps(self, frame, gap_prob=0.3, gap_length=5):
         """
         New anomaly: Simulate temporal gaps in event stream
-        
+
         Args:
             frame: Input frame tensor
             gap_prob: Probability of gap in each pixel
@@ -1907,23 +1907,23 @@ class AnomalyGenerator:
         """
         C, H, W = frame.shape
         frame_with_anomaly = frame.clone()
-        
+
         # Create random gap mask
         gap_mask = torch.rand(H, W) < gap_prob
-        
+
         # Apply temporal gap (zero out affected regions)
         for c in range(C):
             frame_with_anomaly[c][gap_mask] = 0
-        
+
         return frame_with_anomaly, gap_mask
-    
+
     def add_random_anomaly(self, frame, anomaly_type=None):
         # Update to include new anomaly type
         if anomaly_type is None:
             anomaly_type = self.rng.choice([
                 'blackout', 'vibration', 'flip', 'temporal_gaps'  # Add new type
             ])
-        
+
         # Add new case
         if anomaly_type == 'temporal_gaps':
             return self.add_temporal_gaps(frame)
@@ -1940,7 +1940,7 @@ class NewDatasetHandler(MVSECDataHandler):
         # Initialize with new dataset parameters
         super().__init__(data_path, **kwargs)
         self.dataset_type = "NewDataset"
-    
+
     def load_data(self, max_events=1000000):
         """
         Override for new dataset format
@@ -1948,7 +1948,7 @@ class NewDatasetHandler(MVSECDataHandler):
         try:
             # Adapt to new file format (e.g., different HDF5 structure)
             events = self.load_new_format(self.data_path)
-            
+
             # Ensure consistent output format
             return {
                 'x': events[:, 0].astype(int),
@@ -1959,7 +1959,7 @@ class NewDatasetHandler(MVSECDataHandler):
         except Exception as e:
             print(f"Error loading new dataset: {e}")
             raise
-    
+
     def load_new_format(self, data_path):
         # Implement dataset-specific loading logic
         pass
@@ -1971,19 +1971,19 @@ class NewDatasetHandler(MVSECDataHandler):
 # GPU Memory Optimization
 def optimize_for_gpu():
     import torch
-    
+
     # Enable memory efficient attention
     torch.backends.cuda.enable_flash_sdp(True)
-    
+
     # Use mixed precision training
     from torch.cuda.amp import GradScaler, autocast
     scaler = GradScaler()
-    
+
     # Modified training loop
     with autocast():
         outputs = model(frames)
         loss = criterion(outputs, labels)
-    
+
     scaler.scale(loss).backward()
     scaler.step(optimizer)
     scaler.update()
@@ -1992,14 +1992,14 @@ def optimize_for_gpu():
 def optimize_data_loading():
     # Use multiple workers for data loading
     train_loader = DataLoader(
-        train_dataset, 
+        train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=4,          # Parallel data loading
         pin_memory=True,        # Faster GPU transfer
         persistent_workers=True # Keep workers alive
     )
-    
+
     return train_loader
 \end{lstlisting}
 
@@ -2029,21 +2029,21 @@ For software engineers entering the field of neuromorphic computing, this guide 
         \item[$\checkmark$] Event shape is (N, 4) format
         \item[$\checkmark$] Sensor resolution detected correctly
     \end{itemize}
-    
+
     \item \textbf{Preprocessing Quality}
     \begin{itemize}
         \item[$\checkmark$] Frames generated with expected shape
         \item[$\checkmark$] Frame values normalized to [0, 1] range
         \item[$\checkmark$] Non-zero pixels present in frames
     \end{itemize}
-    
+
     \item \textbf{Training Progress}
     \begin{itemize}
         \item[$\checkmark$] Loss decreasing over epochs
         \item[$\checkmark$] Accuracy improving over epochs
         \item[$\checkmark$] No large train/validation gap
     \end{itemize}
-    
+
     \item \textbf{Final Performance}
     \begin{itemize}
         \item[$\checkmark$] ROC-AUC > 0.7 (good), > 0.8 (excellent)

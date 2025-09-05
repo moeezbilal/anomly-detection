@@ -103,7 +103,7 @@ def preprocess_events(events, num_frames, sensor_size):
 ```python
 class SpikingAnomalyDetector:
     - SpikingConv2d(2 → 16, kernel=3, stride=2)
-    - SpikingConv2d(16 → 32, kernel=3, stride=2)  
+    - SpikingConv2d(16 → 32, kernel=3, stride=2)
     - SpikingConv2d(32 → 64, kernel=3, stride=2)
     - GlobalAvgPool2d + Linear(64 → 2)
 ```
@@ -323,7 +323,7 @@ anomaly_gen.add_anomaly_type('custom', add_custom_anomaly)
 Based on the architecture and data characteristics:
 
 #### SNN Performance
-- **Advantages**: 
+- **Advantages**:
   - Natural fit for event-based data
   - Energy-efficient spike-based computation
   - Temporal dynamics modeling
@@ -361,11 +361,11 @@ Based on the architecture and data characteristics:
 ## Future Improvements
 
 ### Short-term Enhancements
-1. **Data Augmentation**: 
+1. **Data Augmentation**:
    - Temporal jittering
    - Spatial transformations
    - Event dropout
-   
+
 2. **Advanced Anomalies**:
    - Motion-based anomalies
    - Object-specific anomalies

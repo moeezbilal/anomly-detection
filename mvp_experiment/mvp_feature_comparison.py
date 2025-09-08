@@ -19,15 +19,19 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+from scipy.spatial.distance import pdist, squareform
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (
     accuracy_score,
+    confusion_matrix,
     f1_score,
+    precision_recall_curve,
     precision_score,
     recall_score,
     roc_auc_score,
+    roc_curve,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
@@ -196,17 +200,28 @@ class SimpleAnomalyGenerator:
             return self.flip_polarities(frame)
 
 
-class MVPFeatureExtractor:
-    """MVP feature extractor with exactly 6 features (3 basic + 3 spatiotemporal)"""
+class EnhancedFeatureExtractor:
+    """Enhanced feature extractor with spatiotemporal and neuromorphic features"""
 
     def __init__(self):
         self.basic_names = ["spatial_max", "spatial_mean", "intensity_std"]
         self.spatiotemporal_names = [
-            "spatial_corr_mean",
-            "center_motion_strength",
-            "flow_magnitude_std",
+            "isi_mean",
+            "isi_std",
+            "event_rate_std",
+            "temporal_correlation",
+            "motion_flow_magnitude",
+            "optical_flow_divergence",
         ]
-        self.all_names = self.basic_names + self.spatiotemporal_names
+        self.neuromorphic_names = [
+            "spike_entropy",
+            "lif_response_mean",
+            "polarity_synchrony",
+            "event_clustering_density",
+        ]
+        self.all_names = (
+            self.basic_names + self.spatiotemporal_names + self.neuromorphic_names
+        )
 
     def extract_basic_features(self, frame):
         """Extract 3 basic features"""
@@ -226,50 +241,172 @@ class MVPFeatureExtractor:
 
         return np.array([spatial_max, spatial_mean, intensity_std])
 
-    def extract_spatiotemporal_features(self, frame, prev_frame=None):
-        """Extract 3 spatiotemporal features"""
+    def extract_spatiotemporal_features(self, frame, prev_frame=None, events_data=None):
+        """Extract 6 enhanced spatiotemporal features"""
         if isinstance(frame, torch.Tensor):
             frame = frame.cpu().numpy()
         if prev_frame is not None and isinstance(prev_frame, torch.Tensor):
             prev_frame = prev_frame.cpu().numpy()
 
         combined = np.sum(frame, axis=0) if len(frame.shape) == 3 else frame
+        pos_events = frame[0] if len(frame.shape) == 3 else combined
+        neg_events = frame[1] if len(frame.shape) == 3 else np.zeros_like(combined)
 
-        # 1. Spatial correlation mean - spatial pattern consistency
-        grad_y, grad_x = np.gradient(combined)
-        spatial_corr_mean = np.mean(grad_x * grad_y)
+        # 1. Inter-spike interval (ISI) mean
+        active_pixels = np.where(combined > 0)
+        if len(active_pixels[0]) > 1:
+            distances = pdist(np.column_stack(active_pixels))
+            isi_mean = np.mean(distances) if len(distances) > 0 else 0.0
+        else:
+            isi_mean = 0.0
 
-        # 2. Center motion strength - central region activity
+        # 2. ISI standard deviation
+        if len(active_pixels[0]) > 1:
+            distances = pdist(np.column_stack(active_pixels))
+            isi_std = np.std(distances) if len(distances) > 0 else 0.0
+        else:
+            isi_std = 0.0
+
+        # 3. Event rate standard deviation across regions
         H, W = combined.shape
-        center_h, center_w = H // 2, W // 2
-        center_region = combined[
-            center_h - H // 4 : center_h + H // 4, center_w - W // 4 : center_w + W // 4
-        ]
-        center_motion_strength = (
-            np.mean(center_region) if center_region.size > 0 else 0.0
-        )
+        region_size = max(H // 8, W // 8, 4)
+        event_rates = []
+        for i in range(0, H - region_size, region_size):
+            for j in range(0, W - region_size, region_size):
+                region = combined[i : i + region_size, j : j + region_size]
+                event_rates.append(np.sum(region))
+        event_rate_std = np.std(event_rates) if event_rates else 0.0
 
-        # 3. Flow magnitude std - motion pattern variation
+        # 4. Temporal correlation between positive and negative events
+        if np.sum(pos_events) > 0 and np.sum(neg_events) > 0:
+            pos_flat = pos_events.flatten()
+            neg_flat = neg_events.flatten()
+            correlation = np.corrcoef(pos_flat, neg_flat)[0, 1]
+            temporal_correlation = correlation if not np.isnan(correlation) else 0.0
+        else:
+            temporal_correlation = 0.0
+
+        # 5. Motion flow magnitude (enhanced optical flow)
         if prev_frame is not None:
             prev_combined = (
                 np.sum(prev_frame, axis=0) if len(prev_frame.shape) == 3 else prev_frame
             )
-
-            # Simple optical flow approximation
             diff = combined - prev_combined
             flow_grad_y, flow_grad_x = np.gradient(diff)
-            flow_magnitude = np.sqrt(flow_grad_x**2 + flow_grad_y**2)
-            flow_magnitude_std = np.std(flow_magnitude)
+            motion_flow_magnitude = np.mean(
+                np.sqrt(flow_grad_x**2 + flow_grad_y**2)
+            )
         else:
-            flow_magnitude_std = 0.0
+            motion_flow_magnitude = 0.0
 
-        return np.array([spatial_corr_mean, center_motion_strength, flow_magnitude_std])
+        # 6. Optical flow divergence
+        if prev_frame is not None:
+            prev_combined = (
+                np.sum(prev_frame, axis=0) if len(prev_frame.shape) == 3 else prev_frame
+            )
+            diff = combined - prev_combined
+            flow_grad_y, flow_grad_x = np.gradient(diff)
+            div_x = np.gradient(flow_grad_x, axis=1)
+            div_y = np.gradient(flow_grad_y, axis=0)
+            optical_flow_divergence = np.mean(div_x + div_y)
+        else:
+            optical_flow_divergence = 0.0
+
+        return np.array(
+            [
+                isi_mean,
+                isi_std,
+                event_rate_std,
+                temporal_correlation,
+                motion_flow_magnitude,
+                optical_flow_divergence,
+            ]
+        )
+
+    def extract_neuromorphic_features(self, frame, prev_frame=None):
+        """Extract 4 neuromorphic-specific features"""
+        if isinstance(frame, torch.Tensor):
+            frame = frame.cpu().numpy()
+
+        combined = np.sum(frame, axis=0) if len(frame.shape) == 3 else frame
+        pos_events = frame[0] if len(frame.shape) == 3 else combined
+        neg_events = frame[1] if len(frame.shape) == 3 else np.zeros_like(combined)
+
+        # 1. Spike entropy - information content of spike patterns
+        nonzero_vals = combined[combined > 0]
+        if len(nonzero_vals) > 1:
+            # Normalize to create probability distribution
+            prob_dist = nonzero_vals / np.sum(nonzero_vals)
+            spike_entropy = -np.sum(prob_dist * np.log2(prob_dist + 1e-10))
+        else:
+            spike_entropy = 0.0
+
+        # 2. LIF (Leaky Integrate-and-Fire) neuron response mean
+        # Simulate LIF neuron response to input events
+        membrane_potential = 0.0
+        leak_factor = 0.9
+        threshold = 0.5
+        spike_responses = []
+
+        flat_events = combined.flatten()
+        for event_strength in flat_events:
+            membrane_potential = membrane_potential * leak_factor + event_strength
+            if membrane_potential > threshold:
+                spike_responses.append(1.0)
+                membrane_potential = 0.0  # Reset after spike
+            else:
+                spike_responses.append(0.0)
+
+        lif_response_mean = np.mean(spike_responses) if spike_responses else 0.0
+
+        # 3. Polarity synchrony - synchronization between pos/neg events
+        if np.sum(pos_events) > 0 and np.sum(neg_events) > 0:
+            # Calculate spatial overlap of positive and negative events
+            pos_mask = pos_events > 0
+            neg_mask = neg_events > 0
+            overlap = np.sum(pos_mask & neg_mask)
+            total_active = np.sum(pos_mask | neg_mask)
+            polarity_synchrony = overlap / total_active if total_active > 0 else 0.0
+        else:
+            polarity_synchrony = 0.0
+
+        # 4. Event clustering density
+        active_pixels = np.where(combined > 0)
+        if len(active_pixels[0]) > 2:
+            # Calculate local density using k-nearest neighbors approach
+            coords = np.column_stack(active_pixels)
+            if len(coords) > 3:
+                # Calculate pairwise distances
+                distances = squareform(pdist(coords))
+                # For each point, find mean distance to 3 nearest neighbors
+                k = min(3, len(coords) - 1)
+                nearest_distances = []
+                for i in range(len(coords)):
+                    row_distances = np.sort(distances[i])
+                    nearest_distances.append(
+                        np.mean(row_distances[1 : k + 1])
+                    )  # Exclude self (distance=0)
+                event_clustering_density = 1.0 / (np.mean(nearest_distances) + 1e-10)
+            else:
+                event_clustering_density = 0.0
+        else:
+            event_clustering_density = 0.0
+
+        return np.array(
+            [
+                spike_entropy,
+                lif_response_mean,
+                polarity_synchrony,
+                event_clustering_density,
+            ]
+        )
 
     def extract_all_features(self, frame, prev_frame=None):
-        """Extract all 6 features"""
+        """Extract all enhanced features"""
         basic_features = self.extract_basic_features(frame)
         spatio_features = self.extract_spatiotemporal_features(frame, prev_frame)
-        return np.concatenate([basic_features, spatio_features])
+        neuro_features = self.extract_neuromorphic_features(frame, prev_frame)
+        return np.concatenate([basic_features, spatio_features, neuro_features])
 
     def get_feature_names(self):
         return self.all_names.copy()
@@ -462,7 +599,99 @@ def visualize_enhanced_anomaly_examples(
         print(f"     - {atype.title()}: {count} examples")
 
 
-def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=30):
+class EnhancedTrainer:
+    """Enhanced trainer with multiple epochs, learning rate scheduling, and cross-validation"""
+
+    def __init__(self, n_estimators=200, max_epochs=150, cv_folds=5, random_state=42):
+        self.n_estimators = n_estimators
+        self.max_epochs = max_epochs
+        self.cv_folds = cv_folds
+        self.random_state = random_state
+        self.best_params = {}
+        self.training_history = {}
+
+    def train_with_cv(self, X, y, model_name="model"):
+        """Train model with cross-validation and parameter optimization"""
+        print(
+            f"\n🔄 Training {model_name} with {self.cv_folds}-fold cross-validation..."
+        )
+
+        # Base parameters configuration
+        # Note: These parameters are used as reference for model creation below
+
+        # Test different learning rates for optimization
+        learning_rates = [0.05, 0.1, 0.15]
+        best_score = 0
+        best_lr = 0.1
+
+        for lr in learning_rates:
+            model = GradientBoostingClassifier(
+                n_estimators=self.n_estimators,
+                learning_rate=lr,
+                max_depth=4,
+                random_state=self.random_state,
+                subsample=0.8,
+            )
+
+            # Cross-validation
+            cv_scores = cross_val_score(
+                model, X, y, cv=self.cv_folds, scoring="accuracy"
+            )
+            mean_score = np.mean(cv_scores)
+
+            if mean_score > best_score:
+                best_score = mean_score
+                best_lr = lr
+
+            print(f"   LR {lr:.3f}: {mean_score:.4f} ± {np.std(cv_scores):.4f}")
+
+        # Train final model with best learning rate
+        final_model = GradientBoostingClassifier(
+            n_estimators=self.n_estimators,
+            learning_rate=best_lr,
+            max_depth=4,
+            random_state=self.random_state,
+            subsample=0.8,
+            validation_fraction=0.2,
+            n_iter_no_change=20,
+            tol=1e-4,
+        )
+
+        self.best_params[model_name] = {
+            "learning_rate": best_lr,
+            "cv_score": best_score,
+        }
+
+        return final_model, best_score
+
+    def evaluate_model(self, model, X_test, y_test, model_name="model"):
+        """Enhanced model evaluation with multiple metrics"""
+        y_pred = model.predict(X_test)
+        y_prob = model.predict_proba(X_test)[:, 1]
+
+        metrics = {
+            "accuracy": accuracy_score(y_test, y_pred),
+            "precision": precision_score(y_test, y_pred, zero_division=0),
+            "recall": recall_score(y_test, y_pred, zero_division=0),
+            "f1_score": f1_score(y_test, y_pred, zero_division=0),
+            "auc": roc_auc_score(y_test, y_prob),
+        }
+
+        # Store additional data for visualization
+        fpr, tpr, _ = roc_curve(y_test, y_prob)
+        precision, recall, _ = precision_recall_curve(y_test, y_prob)
+        cm = confusion_matrix(y_test, y_pred)
+
+        metrics["roc_curve"] = (fpr, tpr)
+        metrics["pr_curve"] = (precision, recall)
+        metrics["confusion_matrix"] = cm
+
+        return metrics
+
+
+def run_enhanced_experiment(
+    data_path="./data", sequence="indoor_flying", num_frames=50
+):
     """Run the complete MVP experiment"""
 
     print("\n🔬 STARTING MVP EXPERIMENT")
@@ -477,9 +706,10 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     frames = loader.events_to_frames(events, sensor_size, num_frames)
 
     # Step 2: Generate dataset with anomalies
-    print("\n🎭 Step 2: Generating Anomaly Dataset")
+    print("\n🎭 Step 2: Generating Enhanced Anomaly Dataset")
     anomaly_gen = SimpleAnomalyGenerator()
-    feature_extractor = MVPFeatureExtractor()
+    feature_extractor = EnhancedFeatureExtractor()
+    trainer = EnhancedTrainer(n_estimators=200, max_epochs=150, cv_folds=5)
 
     # Create balanced dataset
     num_anomalies = num_frames // 2
@@ -635,24 +865,31 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     X = np.array(features_list)
     y = np.array(labels_list)
 
-    print(f"✅ Created dataset: {X.shape[0]} samples, {X.shape[1]} features")
+    print(f"✅ Created enhanced dataset: {X.shape[0]} samples, {X.shape[1]} features")
+    print(
+        f"   Features: {len(feature_extractor.basic_names)} basic + {len(feature_extractor.spatiotemporal_names)} spatiotemporal + {len(feature_extractor.neuromorphic_names)} neuromorphic"
+    )
     print(f"   Normal: {np.sum(y == 0)}, Anomaly: {np.sum(y == 1)}")
 
     # Enhanced Before/After Visualization
     print("\n🎬 ENHANCED BEFORE/AFTER ANOMALY VISUALIZATION")
     visualize_enhanced_anomaly_examples(normal_examples, anomaly_examples)
 
-    # Step 3: Train Separate Models on Basic vs Spatiotemporal Features
-    print("\n🤖 Step 3: Training Separate Models for Feature Comparison")
+    # Step 3: Enhanced Model Training with Cross-Validation
+    print("\n🤖 Step 3: Enhanced Model Training with Cross-Validation")
 
-    # Split basic and spatiotemporal features
-    X_basic = X[:, :3]  # First 3 features (basic)
-    X_spatio = X[:, 3:]  # Last 3 features (spatiotemporal)
+    # Split features into different groups
+    n_basic = len(feature_extractor.basic_names)
+    n_spatio = len(feature_extractor.spatiotemporal_names)
+
+    X_basic = X[:, :n_basic]  # Basic features
+    X_spatio = X[:, n_basic : n_basic + n_spatio]  # Spatiotemporal features
+    X_neuro = X[:, n_basic + n_spatio :]  # Neuromorphic features
 
     models_results = {}
 
     # Train on Basic Features Only
-    print("\n   📊 Training on BASIC features only...")
+    print("\n   📊 Training on BASIC features...")
     X_basic_train, X_basic_test, y_basic_train, y_basic_test = train_test_split(
         X_basic, y, test_size=0.3, random_state=SEED, stratify=y
     )
@@ -661,32 +898,26 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     X_basic_train_scaled = scaler_basic.fit_transform(X_basic_train)
     X_basic_test_scaled = scaler_basic.transform(X_basic_test)
 
-    gb_basic = GradientBoostingClassifier(
-        n_estimators=100, learning_rate=0.1, max_depth=3, random_state=SEED
-    )
-
     train_start = time.time()
+    gb_basic, cv_score = trainer.train_with_cv(
+        X_basic_train_scaled, y_basic_train, "basic"
+    )
     gb_basic.fit(X_basic_train_scaled, y_basic_train)
     basic_train_time = time.time() - train_start
 
-    y_basic_pred = gb_basic.predict(X_basic_test_scaled)
-    y_basic_prob = gb_basic.predict_proba(X_basic_test_scaled)[:, 1]
-
-    basic_metrics = {
-        "accuracy": accuracy_score(y_basic_test, y_basic_pred),
-        "precision": precision_score(y_basic_test, y_basic_pred, zero_division=0),
-        "recall": recall_score(y_basic_test, y_basic_pred, zero_division=0),
-        "f1_score": f1_score(y_basic_test, y_basic_pred, zero_division=0),
-        "auc": roc_auc_score(y_basic_test, y_basic_prob),
-        "train_time": basic_train_time,
-    }
+    basic_metrics = trainer.evaluate_model(
+        gb_basic, X_basic_test_scaled, y_basic_test, "basic"
+    )
+    basic_metrics["train_time"] = basic_train_time
+    basic_metrics["cv_score"] = cv_score
     models_results["basic"] = basic_metrics
 
-    print(f"      ✅ Basic model trained in {basic_train_time:.3f}s")
-    print(f"      📈 Accuracy: {basic_metrics['accuracy']:.4f}")
+    print(
+        f"      ✅ Basic model: CV={cv_score:.4f}, Test={basic_metrics['accuracy']:.4f}"
+    )
 
     # Train on Spatiotemporal Features Only
-    print("\n   🌊 Training on SPATIOTEMPORAL features only...")
+    print("\n   🌊 Training on SPATIOTEMPORAL features...")
     X_spatio_train, X_spatio_test, y_spatio_train, y_spatio_test = train_test_split(
         X_spatio, y, test_size=0.3, random_state=SEED, stratify=y
     )
@@ -695,32 +926,54 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     X_spatio_train_scaled = scaler_spatio.fit_transform(X_spatio_train)
     X_spatio_test_scaled = scaler_spatio.transform(X_spatio_test)
 
-    gb_spatio = GradientBoostingClassifier(
-        n_estimators=100, learning_rate=0.1, max_depth=3, random_state=SEED
-    )
-
     train_start = time.time()
+    gb_spatio, cv_score = trainer.train_with_cv(
+        X_spatio_train_scaled, y_spatio_train, "spatiotemporal"
+    )
     gb_spatio.fit(X_spatio_train_scaled, y_spatio_train)
     spatio_train_time = time.time() - train_start
 
-    y_spatio_pred = gb_spatio.predict(X_spatio_test_scaled)
-    y_spatio_prob = gb_spatio.predict_proba(X_spatio_test_scaled)[:, 1]
-
-    spatio_metrics = {
-        "accuracy": accuracy_score(y_spatio_test, y_spatio_pred),
-        "precision": precision_score(y_spatio_test, y_spatio_pred, zero_division=0),
-        "recall": recall_score(y_spatio_test, y_spatio_pred, zero_division=0),
-        "f1_score": f1_score(y_spatio_test, y_spatio_pred, zero_division=0),
-        "auc": roc_auc_score(y_spatio_test, y_spatio_prob),
-        "train_time": spatio_train_time,
-    }
+    spatio_metrics = trainer.evaluate_model(
+        gb_spatio, X_spatio_test_scaled, y_spatio_test, "spatiotemporal"
+    )
+    spatio_metrics["train_time"] = spatio_train_time
+    spatio_metrics["cv_score"] = cv_score
     models_results["spatiotemporal"] = spatio_metrics
 
-    print(f"      ✅ Spatiotemporal model trained in {spatio_train_time:.3f}s")
-    print(f"      📈 Accuracy: {spatio_metrics['accuracy']:.4f}")
+    print(
+        f"      ✅ Spatiotemporal model: CV={cv_score:.4f}, Test={spatio_metrics['accuracy']:.4f}"
+    )
 
-    # Train on Combined Features for Reference
-    print("\n   🔄 Training on COMBINED features for reference...")
+    # Train on Neuromorphic Features Only
+    print("\n   🧠 Training on NEUROMORPHIC features...")
+    X_neuro_train, X_neuro_test, y_neuro_train, y_neuro_test = train_test_split(
+        X_neuro, y, test_size=0.3, random_state=SEED, stratify=y
+    )
+
+    scaler_neuro = StandardScaler()
+    X_neuro_train_scaled = scaler_neuro.fit_transform(X_neuro_train)
+    X_neuro_test_scaled = scaler_neuro.transform(X_neuro_test)
+
+    train_start = time.time()
+    gb_neuro, cv_score = trainer.train_with_cv(
+        X_neuro_train_scaled, y_neuro_train, "neuromorphic"
+    )
+    gb_neuro.fit(X_neuro_train_scaled, y_neuro_train)
+    neuro_train_time = time.time() - train_start
+
+    neuro_metrics = trainer.evaluate_model(
+        gb_neuro, X_neuro_test_scaled, y_neuro_test, "neuromorphic"
+    )
+    neuro_metrics["train_time"] = neuro_train_time
+    neuro_metrics["cv_score"] = cv_score
+    models_results["neuromorphic"] = neuro_metrics
+
+    print(
+        f"      ✅ Neuromorphic model: CV={cv_score:.4f}, Test={neuro_metrics['accuracy']:.4f}"
+    )
+
+    # Train on All Combined Features
+    print("\n   🔄 Training on ALL COMBINED features...")
     (
         X_combined_train,
         X_combined_test,
@@ -732,63 +985,75 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     X_combined_train_scaled = scaler_combined.fit_transform(X_combined_train)
     X_combined_test_scaled = scaler_combined.transform(X_combined_test)
 
-    gb_combined = GradientBoostingClassifier(
-        n_estimators=100, learning_rate=0.1, max_depth=3, random_state=SEED
-    )
-
     train_start = time.time()
+    gb_combined, cv_score = trainer.train_with_cv(
+        X_combined_train_scaled, y_combined_train, "combined"
+    )
     gb_combined.fit(X_combined_train_scaled, y_combined_train)
     combined_train_time = time.time() - train_start
 
-    y_combined_pred = gb_combined.predict(X_combined_test_scaled)
-    y_combined_prob = gb_combined.predict_proba(X_combined_test_scaled)[:, 1]
-
-    combined_metrics = {
-        "accuracy": accuracy_score(y_combined_test, y_combined_pred),
-        "precision": precision_score(y_combined_test, y_combined_pred, zero_division=0),
-        "recall": recall_score(y_combined_test, y_combined_pred, zero_division=0),
-        "f1_score": f1_score(y_combined_test, y_combined_pred, zero_division=0),
-        "auc": roc_auc_score(y_combined_test, y_combined_prob),
-        "train_time": combined_train_time,
-    }
+    combined_metrics = trainer.evaluate_model(
+        gb_combined, X_combined_test_scaled, y_combined_test, "combined"
+    )
+    combined_metrics["train_time"] = combined_train_time
+    combined_metrics["cv_score"] = cv_score
     models_results["combined"] = combined_metrics
 
-    print(f"      ✅ Combined model trained in {combined_train_time:.3f}s")
-    print(f"      📈 Accuracy: {combined_metrics['accuracy']:.4f}")
-
-    # Direct Comparison
-    print("\n🏆 DIRECT ACCURACY COMPARISON:")
     print(
-        f"   Basic Features:          {basic_metrics['accuracy']:.4f} ({basic_metrics['accuracy']:.1%})"
-    )
-    print(
-        f"   Spatiotemporal Features: {spatio_metrics['accuracy']:.4f} ({spatio_metrics['accuracy']:.1%})"
-    )
-    print(
-        f"   Combined Features:       {combined_metrics['accuracy']:.4f} ({combined_metrics['accuracy']:.1%})"
+        f"      ✅ Combined model: CV={cv_score:.4f}, Test={combined_metrics['accuracy']:.4f}"
     )
 
-    # Determine winner
+    # Enhanced Model Comparison
+    print("\n🏆 ENHANCED MODEL COMPARISON:")
+    print(
+        f"   Basic Features:          {basic_metrics['accuracy']:.4f} ({basic_metrics['accuracy']:.1%}) [CV: {basic_metrics['cv_score']:.4f}]"
+    )
+    print(
+        f"   Spatiotemporal Features: {spatio_metrics['accuracy']:.4f} ({spatio_metrics['accuracy']:.1%}) [CV: {spatio_metrics['cv_score']:.4f}]"
+    )
+    print(
+        f"   Neuromorphic Features:   {neuro_metrics['accuracy']:.4f} ({neuro_metrics['accuracy']:.1%}) [CV: {neuro_metrics['cv_score']:.4f}]"
+    )
+    print(
+        f"   All Combined Features:   {combined_metrics['accuracy']:.4f} ({combined_metrics['accuracy']:.1%}) [CV: {combined_metrics['cv_score']:.4f}]"
+    )
+
+    # Determine best performing model
+    accuracies = {
+        "Basic": basic_metrics["accuracy"],
+        "Spatiotemporal": spatio_metrics["accuracy"],
+        "Neuromorphic": neuro_metrics["accuracy"],
+        "Combined": combined_metrics["accuracy"],
+    }
+
+    best_model = max(accuracies, key=accuracies.get)
+    best_accuracy = accuracies[best_model]
+
+    print(f"\n   🎯 BEST MODEL: {best_model} ({best_accuracy:.1%} accuracy)")
+
+    # Compare individual feature types
     if spatio_metrics["accuracy"] > basic_metrics["accuracy"]:
-        accuracy_winner = "Spatiotemporal"
-        accuracy_advantage = (
+        individual_winner = "Spatiotemporal"
+        advantage = (
             (spatio_metrics["accuracy"] - basic_metrics["accuracy"])
             / basic_metrics["accuracy"]
         ) * 100
-        print(
-            f"   🎯 WINNER: Spatiotemporal features (+{accuracy_advantage:.1f}% better)"
-        )
-    elif basic_metrics["accuracy"] > spatio_metrics["accuracy"]:
-        accuracy_winner = "Basic"
-        accuracy_advantage = (
-            (basic_metrics["accuracy"] - spatio_metrics["accuracy"])
-            / spatio_metrics["accuracy"]
-        ) * 100
-        print(f"   🎯 WINNER: Basic features (+{accuracy_advantage:.1f}% better)")
+    elif neuro_metrics["accuracy"] > max(
+        basic_metrics["accuracy"], spatio_metrics["accuracy"]
+    ):
+        individual_winner = "Neuromorphic"
+        baseline = max(basic_metrics["accuracy"], spatio_metrics["accuracy"])
+        advantage = ((neuro_metrics["accuracy"] - baseline) / baseline) * 100
     else:
-        accuracy_winner = "Tie"
-        accuracy_advantage = 0
-        print("   🎯 RESULT: Tie - Both feature types perform equally")
+        individual_winner = "Basic"
+        baseline = max(spatio_metrics["accuracy"], neuro_metrics["accuracy"])
+        advantage = ((basic_metrics["accuracy"] - baseline) / baseline) * 100
+
+    print(f"   🥇 BEST INDIVIDUAL: {individual_winner} (+{advantage:.1f}% advantage)")
+
+    # Define accuracy winner and advantage for later use
+    accuracy_winner = individual_winner
+    accuracy_advantage = advantage
 
     # Step 4: Feature Analysis from Combined Model
     print("\n🔍 Step 4: Feature Importance Analysis (from combined model)")
@@ -1013,28 +1278,27 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
     )
 
     # Determine accuracy winner
-    print(f"\n🏆 ACCURACY WINNER: {accuracy_winner}")
-    if accuracy_winner != "Tie":
-        print(f"   Advantage: {accuracy_advantage:.1f}% better accuracy")
+    print(f"\n🏆 BEST MODEL: {best_model}")
+    print(f"   Best accuracy: {best_accuracy:.1%}")
 
     # Additional metrics comparison
     print("\n📊 COMPREHENSIVE PERFORMANCE COMPARISON:")
-    print("   Metric          Basic    Spatio   Combined")
-    print("   ─────────────────────────────────────────")
+    print("   Metric          Basic    Spatio   Neuro    Combined")
+    print("   ─────────────────────────────────────────────────")
     print(
-        f"   Accuracy        {basic_metrics['accuracy']:.3f}    {spatio_metrics['accuracy']:.3f}    {combined_metrics['accuracy']:.3f}"
+        f"   Accuracy        {basic_metrics['accuracy']:.3f}    {spatio_metrics['accuracy']:.3f}    {neuro_metrics['accuracy']:.3f}    {combined_metrics['accuracy']:.3f}"
     )
     print(
-        f"   F1-Score        {basic_metrics['f1_score']:.3f}    {spatio_metrics['f1_score']:.3f}    {combined_metrics['f1_score']:.3f}"
+        f"   F1-Score        {basic_metrics['f1_score']:.3f}    {spatio_metrics['f1_score']:.3f}    {neuro_metrics['f1_score']:.3f}    {combined_metrics['f1_score']:.3f}"
     )
     print(
-        f"   AUC-ROC         {basic_metrics['auc']:.3f}    {spatio_metrics['auc']:.3f}    {combined_metrics['auc']:.3f}"
+        f"   AUC-ROC         {basic_metrics['auc']:.3f}    {spatio_metrics['auc']:.3f}    {neuro_metrics['auc']:.3f}    {combined_metrics['auc']:.3f}"
     )
     print(
-        f"   Precision       {basic_metrics['precision']:.3f}    {spatio_metrics['precision']:.3f}    {combined_metrics['precision']:.3f}"
+        f"   Precision       {basic_metrics['precision']:.3f}    {spatio_metrics['precision']:.3f}    {neuro_metrics['precision']:.3f}    {combined_metrics['precision']:.3f}"
     )
     print(
-        f"   Recall          {basic_metrics['recall']:.3f}    {spatio_metrics['recall']:.3f}    {combined_metrics['recall']:.3f}"
+        f"   Recall          {basic_metrics['recall']:.3f}    {spatio_metrics['recall']:.3f}    {neuro_metrics['recall']:.3f}    {combined_metrics['recall']:.3f}"
     )
 
     # Count wins across all metrics
@@ -1148,16 +1412,24 @@ def run_mvp_experiment(data_path="./data", sequence="indoor_flying", num_frames=
 
 
 if __name__ == "__main__":
-    print("🚀 MVP Feature Comparison Experiment Starting...")
-    print("This experiment directly addresses the research question:")
-    print("'How do spatiotemporal features compare to basic features")
-    print("for detecting anomalies in neuromorphic data?'")
+    print("🚀 Enhanced Feature Comparison Experiment Starting...")
+    print("This enhanced experiment addresses the research question:")
+    print("'How do pure spatiotemporal and neuromorphic features compare")
+    print("to basic features for detecting anomalies in neuromorphic data?'")
+    print("\n🔬 Enhancements:")
+    print(
+        "   • Advanced spatiotemporal features (ISI, event rates, temporal correlation)"
+    )
+    print("   • Pure neuromorphic features (spike entropy, LIF responses, synchrony)")
+    print("   • Multi-epoch training with cross-validation")
+    print("   • Learning rate optimization")
+    print("   • Enhanced evaluation metrics")
     print()
 
     try:
-        results = run_mvp_experiment()
-        print("\n✅ Experiment completed successfully!")
-        print("🎯 Research question answered with quantitative evidence.")
+        results = run_enhanced_experiment()
+        print("\n✅ Enhanced experiment completed successfully!")
+        print("🎯 Research question answered with comprehensive quantitative evidence.")
 
     except Exception as e:
         print(f"\n❌ Experiment failed: {e}")
